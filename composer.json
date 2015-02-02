@@ -1,0 +1,28 @@
+{
+    "name": "alexdpy/acl",
+    "description": "Acl - Php",
+    "authors": [
+        {
+            "name": "Alexandre Dupuy",
+            "email": "alex.dpy@gmail.com"
+        }
+    ],
+    "license": "MIT",
+    "type": "library",
+    "require": {
+        "doctrine/dbal": "~2.5"
+    },
+    "require-dev": {
+        "symfony/console": "2.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "AlexDpy\\Acl\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\AlexDpy\\Acl\\": "tests/"
+        }
+    }
+}
