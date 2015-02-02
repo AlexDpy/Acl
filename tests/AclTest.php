@@ -179,6 +179,26 @@ class AclTest extends AbstractAclTest
         $this->assertFalse($this->acl->isGranted($this->malloryRequester, $this->fooResource, 'delete'));
     }
 
+    public function testIsGrantedWithANonExistentRequester()
+    {
+        $this->insertPermission($this->aliceRequester, $this->fooResource, 1);
+        try {
+            $this->assertFalse($this->acl->isGranted($this->malloryRequester, $this->fooResource, 'view'));
+        } catch (\Exception $e) {
+            $this->fail();
+        }
+    }
+
+    public function testIsGrantedWithANonExistentResource()
+    {
+        $this->insertPermission($this->aliceRequester, $this->fooResource, 1);
+        try {
+            $this->assertFalse($this->acl->isGranted($this->aliceRequester, $this->barResource, 'view'));
+        } catch (\Exception $e) {
+            $this->fail();
+        }
+    }
+
     /**
      * @param RequesterInterface $requester
      * @param ResourceInterface  $resource
