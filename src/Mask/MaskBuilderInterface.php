@@ -24,22 +24,18 @@ interface MaskBuilderInterface
     /**
      * Adds a mask to the permission.
      *
-     * @param mixed $mask
+     * @param int|string $mask
      *
      * @return MaskBuilderInterface
-     *
-     * @throws \InvalidArgumentException
      */
     public function add($mask);
 
     /**
      * Removes a mask from the permission.
      *
-     * @param mixed $mask
+     * @param int|string $mask
      *
      * @return MaskBuilderInterface
-     *
-     * @throws \InvalidArgumentException
      */
     public function remove($mask);
 
@@ -55,7 +51,7 @@ interface MaskBuilderInterface
      *
      * @param mixed $code
      *
-     * @return int
+     * @return int|string
      *
      * @throws \InvalidArgumentException
      */
