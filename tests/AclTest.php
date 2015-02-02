@@ -158,6 +158,24 @@ class AclTest extends AbstractAclTest
         $this->assertEquals(2, $this->findMask($this->aliceRequester, $this->fooResource));
     }
 
+    public function testIsGranted()
+    {
+        $this->insertPermission($this->aliceRequester, $this->fooResource, 1);
+        $this->assertTrue($this->acl->isGranted($this->aliceRequester, $this->fooResource, 'view'));
+        $this->assertFalse($this->acl->isGranted($this->aliceRequester, $this->fooResource, 'edit'));
+        $this->assertFalse($this->acl->isGranted($this->aliceRequester, $this->fooResource, 'create'));
+        $this->assertFalse($this->acl->isGranted($this->aliceRequester, $this->fooResource, 'delete'));
+        $this->assertFalse($this->acl->isGranted($this->aliceRequester, $this->barResource, 'view'));
+
+        $this->insertPermission($this->bobRequester, $this->fooResource, 10);
+        $this->assertFalse($this->acl->isGranted($this->bobRequester, $this->fooResource, 'view'));
+        $this->assertTrue($this->acl->isGranted($this->bobRequester, $this->fooResource, 'edit'));
+        $this->assertFalse($this->acl->isGranted($this->bobRequester, $this->fooResource, 'create'));
+        $this->assertTrue($this->acl->isGranted($this->bobRequester, $this->fooResource, 'delete'));
+        $this->assertFalse($this->acl->isGranted($this->bobRequester, $this->barResource, 'edit'));
+        $this->assertFalse($this->acl->isGranted($this->bobRequester, $this->barResource, 'delete'));
+    }
+
     /**
      * @param RequesterInterface $requester
      * @param ResourceInterface  $resource
