@@ -3,6 +3,7 @@
 namespace AlexDpy\Acl;
 
 use AlexDpy\Acl\Cache\PermissionBuffer;
+use AlexDpy\Acl\Cache\PermissionBufferInterface;
 use AlexDpy\Acl\Exception\PermissionNotFoundException;
 use AlexDpy\Acl\Mask\MaskBuilderInterface;
 use AlexDpy\Acl\Model\Permission;
@@ -24,7 +25,7 @@ class Acl implements AclInterface
     protected $maskBuilderClass;
 
     /**
-     * @var PermissionBuffer
+     * @var PermissionBufferInterface
      */
     protected $permissionBuffer;
 

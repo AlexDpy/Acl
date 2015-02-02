@@ -6,7 +6,7 @@ use AlexDpy\Acl\Model\PermissionInterface;
 use AlexDpy\Acl\Model\RequesterInterface;
 use AlexDpy\Acl\Model\ResourceInterface;
 
-class PermissionBuffer
+class PermissionBuffer implements PermissionBufferInterface
 {
     /**
      * @var array
@@ -16,7 +16,7 @@ class PermissionBuffer
     /**
      * @param PermissionInterface $permission
      *
-     * @return PermissionBuffer
+     * @return PermissionBufferInterface
      */
     public function add(PermissionInterface $permission)
     {
@@ -29,7 +29,7 @@ class PermissionBuffer
     /**
      * @param PermissionInterface $permission
      *
-     * @return PermissionBuffer
+     * @return PermissionBufferInterface
      */
     public function remove(PermissionInterface $permission)
     {
