@@ -8,6 +8,9 @@ use Doctrine\DBAL\Types\Type;
 
 class AclSchema extends Schema
 {
+    const REQUESTER_LENGTH = 255;
+    const RESOURCE_LENGTH = 255;
+
     public function __construct(
         array $tables = array(),
         array $sequences = array(),
@@ -17,8 +20,8 @@ class AclSchema extends Schema
         parent::__construct($tables, $sequences, $schemaConfig, $namespaces);
 
         $permissionsTable = $this->createTable('acl_permissions');
-        $permissionsTable->addColumn('requester', Type::STRING, ['length' => 255]);
-        $permissionsTable->addColumn('resource', Type::STRING, ['length' => 255]);
+        $permissionsTable->addColumn('requester', Type::STRING, ['length' => self::REQUESTER_LENGTH]);
+        $permissionsTable->addColumn('resource', Type::STRING, ['length' => self::RESOURCE_LENGTH]);
         $permissionsTable->addColumn('mask', Type::INTEGER);
         $permissionsTable
             ->setPrimaryKey(['requester', 'resource'])
