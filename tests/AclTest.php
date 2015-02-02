@@ -166,6 +166,7 @@ class AclTest extends AbstractAclTest
         $this->assertFalse($this->acl->isGranted($this->aliceRequester, $this->fooResource, 'create'));
         $this->assertFalse($this->acl->isGranted($this->aliceRequester, $this->fooResource, 'delete'));
         $this->assertFalse($this->acl->isGranted($this->aliceRequester, $this->barResource, 'view'));
+        $this->assertFalse($this->acl->isGranted($this->malloryRequester, $this->fooResource, 'view'));
 
         $this->insertPermission($this->bobRequester, $this->fooResource, 10);
         $this->assertFalse($this->acl->isGranted($this->bobRequester, $this->fooResource, 'view'));
@@ -174,6 +175,8 @@ class AclTest extends AbstractAclTest
         $this->assertTrue($this->acl->isGranted($this->bobRequester, $this->fooResource, 'delete'));
         $this->assertFalse($this->acl->isGranted($this->bobRequester, $this->barResource, 'edit'));
         $this->assertFalse($this->acl->isGranted($this->bobRequester, $this->barResource, 'delete'));
+        $this->assertFalse($this->acl->isGranted($this->malloryRequester, $this->fooResource, 'edit'));
+        $this->assertFalse($this->acl->isGranted($this->malloryRequester, $this->fooResource, 'delete'));
     }
 
     /**
