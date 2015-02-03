@@ -199,6 +199,32 @@ class AclTest extends AbstractAclTest
         }
     }
 
+    public function testIsGrantedWithCascadingRequester()
+    {
+        $alice = new User('alice', ['ROLE_USER', 'ROLE_EDITOR']);
+
+        $this->insertPermission(new Requester('ROLE_ADMIN'), $this->fooResource, 1 + 2 + 4 + 8);
+        $this->insertPermission(new Requester('ROLE_EDITOR'), $this->fooResource, 1 + 2 + 4);
+        $this->insertPermission(new Requester('ROLE_USER'), $this->fooResource, 1);
+
+        $this->assertTrue($this->acl->isGranted($alice, $this->fooResource, 'view'));
+        $this->assertTrue($this->acl->isGranted($alice, $this->fooResource, 'edit'));
+        $this->assertTrue($this->acl->isGranted($alice, $this->fooResource, 'create'));
+        $this->assertFalse($this->acl->isGranted($alice, $this->fooResource, 'delete'));
+    }
+
+    public function testCascadingRequesterCircularReferenceImplementation()
+    {
+        $bob = new UserCircularCascading('bob', ['mallory']);
+        $mallory = new UserCircularCascading('mallory', ['bob']);
+
+        $this->insertPermission($bob, $this->fooResource, 1);
+        $this->insertPermission($mallory, $this->fooResource, 1 + 2 + 4 + 8);
+
+        $this->assertTrue($this->acl->isGranted($bob, $this->fooResource, 'view'));
+        $this->assertTrue($this->acl->isGranted($bob, $this->fooResource, 'delete'));
+    }
+
     /**
      * @param RequesterInterface $requester
      * @param ResourceInterface  $resource

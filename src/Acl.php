@@ -6,6 +6,7 @@ use AlexDpy\Acl\Cache\PermissionBuffer;
 use AlexDpy\Acl\Cache\PermissionBufferInterface;
 use AlexDpy\Acl\Exception\PermissionNotFoundException;
 use AlexDpy\Acl\Mask\MaskBuilderInterface;
+use AlexDpy\Acl\Model\CascadingRequesterInterface;
 use AlexDpy\Acl\Model\Permission;
 use AlexDpy\Acl\Model\PermissionInterface;
 use AlexDpy\Acl\Model\RequesterInterface;
@@ -98,15 +99,31 @@ class Acl implements AclInterface
     /**
      * {@inheritdoc}
      */
-    public function isGranted(RequesterInterface $requester, ResourceInterface $resource, $action)
+    public function isGranted(RequesterInterface $requester, ResourceInterface $resource, $action, &$cascadingRequesterBuffer = [])
     {
         try {
             $permission = $this->findPermission($requester, $resource);
 
-            return $permission->isGranted($action);
+            $isGranted = $permission->isGranted($action);
         } catch (PermissionNotFoundException $e) {
-            return false;
+            $isGranted = false;
         }
+
+        if (false === $isGranted && $requester instanceof CascadingRequesterInterface) {
+            $cascadingRequesterBuffer[] = $requester->getAclRequesterIdentifier();
+            foreach ($requester->getAclParentsRequester() as $parentRequester) {
+                if (in_array($parentRequester->getAclRequesterIdentifier(), $cascadingRequesterBuffer)) {
+                    return $isGranted;
+                }
+
+                $cascadingRequesterBuffer[] = $parentRequester->getAclRequesterIdentifier();
+                if (true === $this->isGranted($parentRequester, $resource, $action, $cascadingRequesterBuffer)) {
+                    return true;
+                }
+            }
+        }
+
+        return $isGranted;
     }
 
     /**
@@ -138,6 +155,16 @@ class Acl implements AclInterface
             $permission->setPersistent(true);
 
             $this->permissionBuffer->add($permission);
+        }
+
+        if ($requester instanceof CascadingRequesterInterface) {
+            foreach ($requester->getAclParentsRequester() as $parentRequester) {
+                try {
+                    $this->findPermission($parentRequester, $resource);
+                } catch (PermissionNotFoundException $e) {
+
+                }
+            }
         }
 
         return $permission;
