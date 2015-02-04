@@ -99,7 +99,20 @@ class Acl implements AclInterface
     /**
      * {@inheritdoc}
      */
-    public function isGranted(RequesterInterface $requester, ResourceInterface $resource, $action, &$cascadingRequesterBuffer = [])
+    public function isGranted(RequesterInterface $requester, ResourceInterface $resource, $action)
+    {
+        return $this->processIsGranted($requester, $resource, $action);
+    }
+
+    /**
+     * @param RequesterInterface $requester
+     * @param ResourceInterface  $resource
+     * @param string             $action
+     * @param array              $buffer
+     *
+     * @return bool
+     */
+    protected function processIsGranted(RequesterInterface $requester, ResourceInterface $resource, $action, &$buffer = [])
     {
         try {
             $permission = $this->findPermission($requester, $resource);
@@ -110,14 +123,15 @@ class Acl implements AclInterface
         }
 
         if (false === $isGranted && $requester instanceof CascadingRequesterInterface) {
-            $cascadingRequesterBuffer[] = $requester->getAclRequesterIdentifier();
-            foreach ($requester->getAclParentsRequester() as $parentRequester) {
-                if (in_array($parentRequester->getAclRequesterIdentifier(), $cascadingRequesterBuffer)) {
+            $buffer[] = $requester->getAclRequesterIdentifier();
+
+            foreach ($requester->getAclParentsRequester() as $requesterParent) {
+                if (in_array($requesterParent->getAclRequesterIdentifier(), $buffer)) {
                     return $isGranted;
                 }
 
-                $cascadingRequesterBuffer[] = $parentRequester->getAclRequesterIdentifier();
-                if (true === $this->isGranted($parentRequester, $resource, $action, $cascadingRequesterBuffer)) {
+                $buffer[] = $requesterParent->getAclRequesterIdentifier();
+                if (true === $this->processIsGranted($requesterParent, $resource, $action, $buffer)) {
                     return true;
                 }
             }
@@ -155,16 +169,6 @@ class Acl implements AclInterface
             $permission->setPersistent(true);
 
             $this->permissionBuffer->add($permission);
-        }
-
-        if ($requester instanceof CascadingRequesterInterface) {
-            foreach ($requester->getAclParentsRequester() as $parentRequester) {
-                try {
-                    $this->findPermission($parentRequester, $resource);
-                } catch (PermissionNotFoundException $e) {
-
-                }
-            }
         }
 
         return $permission;
