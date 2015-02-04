@@ -6,6 +6,7 @@ use AlexDpy\Acl\Cache\PermissionBuffer;
 use AlexDpy\Acl\Cache\PermissionBufferInterface;
 use AlexDpy\Acl\Exception\PermissionNotFoundException;
 use AlexDpy\Acl\Mask\MaskBuilderInterface;
+use AlexDpy\Acl\Model\CascadingRequesterInterface;
 use AlexDpy\Acl\Model\Permission;
 use AlexDpy\Acl\Model\PermissionInterface;
 use AlexDpy\Acl\Model\RequesterInterface;
@@ -100,13 +101,43 @@ class Acl implements AclInterface
      */
     public function isGranted(RequesterInterface $requester, ResourceInterface $resource, $action)
     {
+        return $this->processIsGranted($requester, $resource, $action);
+    }
+
+    /**
+     * @param RequesterInterface $requester
+     * @param ResourceInterface  $resource
+     * @param string             $action
+     * @param array              $buffer
+     *
+     * @return bool
+     */
+    protected function processIsGranted(RequesterInterface $requester, ResourceInterface $resource, $action, &$buffer = [])
+    {
         try {
             $permission = $this->findPermission($requester, $resource);
 
-            return $permission->isGranted($action);
+            $isGranted = $permission->isGranted($action);
         } catch (PermissionNotFoundException $e) {
-            return false;
+            $isGranted = false;
         }
+
+        if (false === $isGranted && $requester instanceof CascadingRequesterInterface) {
+            $buffer[] = $requester->getAclRequesterIdentifier();
+
+            foreach ($requester->getAclParentsRequester() as $requesterParent) {
+                if (in_array($requesterParent->getAclRequesterIdentifier(), $buffer)) {
+                    return $isGranted;
+                }
+
+                $buffer[] = $requesterParent->getAclRequesterIdentifier();
+                if (true === $this->processIsGranted($requesterParent, $resource, $action, $buffer)) {
+                    return true;
+                }
+            }
+        }
+
+        return $isGranted;
     }
 
     /**

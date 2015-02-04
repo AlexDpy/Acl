@@ -91,7 +91,7 @@ class AclTest extends AbstractAclTest
 
     public function testRevoke()
     {
-        $this->insertPermission($this->aliceRequester, $this->fooResource, 7);
+        $this->insertPermission($this->aliceRequester, $this->fooResource, 1 + 2 + 4);
 
         $this->acl->revoke($this->aliceRequester, $this->fooResource, 'create');
         $this->assertEquals(3, $this->findMask($this->aliceRequester, $this->fooResource));
@@ -99,7 +99,7 @@ class AclTest extends AbstractAclTest
 
     public function testRevokeWithArrayParameter()
     {
-        $this->insertPermission($this->aliceRequester, $this->fooResource, 7);
+        $this->insertPermission($this->aliceRequester, $this->fooResource, 1 + 2 + 4);
 
         $this->acl->revoke($this->aliceRequester, $this->fooResource, ['create']);
         $this->assertEquals(3, $this->findMask($this->aliceRequester, $this->fooResource));
@@ -107,7 +107,7 @@ class AclTest extends AbstractAclTest
 
     public function testRevokeManyActionsAtDifferentSteps()
     {
-        $this->insertPermission($this->aliceRequester, $this->fooResource, 7);
+        $this->insertPermission($this->aliceRequester, $this->fooResource, 1 + 2 + 4);
 
         $this->acl->revoke($this->aliceRequester, $this->fooResource, 'view');
         $this->assertEquals(6, $this->findMask($this->aliceRequester, $this->fooResource));
@@ -118,7 +118,7 @@ class AclTest extends AbstractAclTest
 
     public function testRevokeManyActionsAtTheSameTime()
     {
-        $this->insertPermission($this->aliceRequester, $this->fooResource, 7);
+        $this->insertPermission($this->aliceRequester, $this->fooResource, 1 + 2 + 4);
 
         $this->acl->revoke($this->aliceRequester, $this->fooResource, ['view', 'edit']);
         $this->assertEquals(4, $this->findMask($this->aliceRequester, $this->fooResource));
@@ -168,7 +168,7 @@ class AclTest extends AbstractAclTest
         $this->assertFalse($this->acl->isGranted($this->aliceRequester, $this->barResource, 'view'));
         $this->assertFalse($this->acl->isGranted($this->malloryRequester, $this->fooResource, 'view'));
 
-        $this->insertPermission($this->bobRequester, $this->fooResource, 10);
+        $this->insertPermission($this->bobRequester, $this->fooResource, 2 + 8);
         $this->assertFalse($this->acl->isGranted($this->bobRequester, $this->fooResource, 'view'));
         $this->assertTrue($this->acl->isGranted($this->bobRequester, $this->fooResource, 'edit'));
         $this->assertFalse($this->acl->isGranted($this->bobRequester, $this->fooResource, 'create'));
@@ -197,6 +197,73 @@ class AclTest extends AbstractAclTest
         } catch (\Exception $e) {
             $this->fail();
         }
+    }
+
+    public function testIsGrantedWithCascadingRequester()
+    {
+        $alice = new User('alice', ['ROLE_USER', 'ROLE_EDITOR']);
+
+        $this->insertPermission(new Requester('ROLE_ADMIN'), $this->fooResource, 1 + 2 + 4 + 8);
+        $this->insertPermission(new Requester('ROLE_EDITOR'), $this->fooResource, 1 + 2 + 4);
+        $this->insertPermission(new Requester('ROLE_USER'), $this->fooResource, 1);
+
+        $this->assertTrue($this->acl->isGranted($alice, $this->fooResource, 'view'));
+        $this->assertTrue($this->acl->isGranted($alice, $this->fooResource, 'edit'));
+        $this->assertTrue($this->acl->isGranted($alice, $this->fooResource, 'create'));
+        $this->assertFalse($this->acl->isGranted($alice, $this->fooResource, 'delete'));
+    }
+
+    public function testCascadingRequesterCircularReferenceImplementation()
+    {
+        $bob = new UserCircularCascading('bob', ['mallory']);
+        $mallory = new UserCircularCascading('mallory', ['bob']);
+        $oscar = new UserCircularCascading('oscar', ['bob', 'mallory']);
+
+        $this->assertFalse($this->acl->isGranted($bob, $this->fooResource, 'view'));
+        $this->assertFalse($this->acl->isGranted($oscar, $this->fooResource, 'edit'));
+
+        $this->insertPermission($bob, $this->fooResource, 1);
+        $this->insertPermission($mallory, $this->fooResource, 2);
+
+        $this->assertTrue($this->acl->isGranted($bob, $this->fooResource, 'view'));
+        $this->assertTrue($this->acl->isGranted($bob, $this->fooResource, 'edit'));
+        $this->assertTrue($this->acl->isGranted($mallory, $this->fooResource, 'edit'));
+        $this->assertTrue($this->acl->isGranted($mallory, $this->fooResource, 'edit'));
+        $this->assertTrue($this->acl->isGranted($oscar, $this->fooResource, 'view'));
+        $this->assertTrue($this->acl->isGranted($oscar, $this->fooResource, 'edit'));
+    }
+
+    public function testIsGrantedWithManyCascadingRequesterLevels()
+    {
+        $oscar = new UserCascading('oscar');
+        $mallory = new UserCascading('mallory', [$oscar]);
+        $bob = new UserCascading('bob', [$mallory]);
+        $alice = new UserCascading('alice', [$bob]);
+
+        $this->insertPermission($oscar, $this->fooResource, 1);
+        $this->insertPermission($mallory, $this->fooResource, 2);
+        $this->insertPermission($bob, $this->fooResource, 4);
+        $this->insertPermission($alice, $this->fooResource, 8);
+
+        $this->assertTrue($this->acl->isGranted($alice, $this->fooResource, 'view'));
+        $this->assertTrue($this->acl->isGranted($alice, $this->fooResource, 'edit'));
+        $this->assertTrue($this->acl->isGranted($alice, $this->fooResource, 'create'));
+        $this->assertTrue($this->acl->isGranted($alice, $this->fooResource, 'delete'));
+
+        $this->assertTrue($this->acl->isGranted($bob, $this->fooResource, 'view'));
+        $this->assertTrue($this->acl->isGranted($bob, $this->fooResource, 'edit'));
+        $this->assertTrue($this->acl->isGranted($bob, $this->fooResource, 'create'));
+        $this->assertFalse($this->acl->isGranted($bob, $this->fooResource, 'delete'));
+
+        $this->assertTrue($this->acl->isGranted($mallory, $this->fooResource, 'view'));
+        $this->assertTrue($this->acl->isGranted($mallory, $this->fooResource, 'edit'));
+        $this->assertFalse($this->acl->isGranted($mallory, $this->fooResource, 'create'));
+        $this->assertFalse($this->acl->isGranted($mallory, $this->fooResource, 'delete'));
+
+        $this->assertTrue($this->acl->isGranted($oscar, $this->fooResource, 'view'));
+        $this->assertFalse($this->acl->isGranted($oscar, $this->fooResource, 'edit'));
+        $this->assertFalse($this->acl->isGranted($oscar, $this->fooResource, 'create'));
+        $this->assertFalse($this->acl->isGranted($oscar, $this->fooResource, 'delete'));
     }
 
     /**
