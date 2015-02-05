@@ -29,4 +29,12 @@ interface PermissionBufferInterface
      * @return PermissionInterface|null
      */
     public function get(RequesterInterface $requester, ResourceInterface $resource);
+
+    /**
+     * @param RequesterInterface $requester
+     * @param ResourceInterface  $resource
+     *
+     * @return bool
+     */
+    public function has(RequesterInterface $requester, ResourceInterface $resource);
 }

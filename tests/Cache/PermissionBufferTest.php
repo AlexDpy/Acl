@@ -42,6 +42,34 @@ class PermissionBufferTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue(isset($buffer['alice']['bar']));
     }
 
+    public function testHas()
+    {
+        $permissionBuffer = $this->getPermissionBuffer();
+        $this->setReflectionBufferValue($permissionBuffer, [
+            'alice' => ['foo' => $this->generatePermission('alice', 'foo', 4)]
+        ]);
+
+        $this->assertTrue($permissionBuffer->has(new Requester('alice'), new Resource('foo')));
+        $this->assertFalse($permissionBuffer->has(new Requester('alice'), new Resource('bar')));
+        $this->assertFalse($permissionBuffer->has(new Requester('mallory'), new Resource('foo')));
+    }
+
+    public function testGet()
+    {
+        $permissionBuffer = $this->getPermissionBuffer();
+        $aliceFooPermission = $this->generatePermission('alice', 'foo', 4);
+        $this->setReflectionBufferValue($permissionBuffer, [
+            'alice' => ['foo' => $aliceFooPermission]
+        ]);
+
+        $this->assertEquals(
+            $aliceFooPermission,
+            $permissionBuffer->get(new Requester('alice'), new Resource('foo'))
+        );
+        $this->assertNull($permissionBuffer->get(new Requester('alice'), new Resource('bar')));
+        $this->assertNull($permissionBuffer->get(new Requester('mallory'), new Resource('foo')));
+    }
+
     /**
      * @param PermissionBufferInterface $permissionBuffer
      *

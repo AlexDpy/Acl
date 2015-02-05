@@ -14,9 +14,7 @@ class PermissionBuffer implements PermissionBufferInterface
     protected $buffer;
 
     /**
-     * @param PermissionInterface $permission
-     *
-     * @return PermissionBufferInterface
+     * {@inheritdoc}
      */
     public function add(PermissionInterface $permission)
     {
@@ -27,9 +25,7 @@ class PermissionBuffer implements PermissionBufferInterface
     }
 
     /**
-     * @param PermissionInterface $permission
-     *
-     * @return PermissionBufferInterface
+     * {@inheritdoc}
      */
     public function remove(PermissionInterface $permission)
     {
@@ -40,17 +36,22 @@ class PermissionBuffer implements PermissionBufferInterface
     }
 
     /**
-     * @param RequesterInterface $requester
-     * @param ResourceInterface  $resource
-     *
-     * @return PermissionInterface|null
+     * {@inheritdoc}
      */
     public function get(RequesterInterface $requester, ResourceInterface $resource)
     {
-        if (isset($this->buffer[$requester->getAclRequesterIdentifier()][$resource->getAclResourceIdentifier()])) {
+        if (true === $this->has($requester, $resource)) {
             return $this->buffer[$requester->getAclRequesterIdentifier()][$resource->getAclResourceIdentifier()];
         }
 
         return null;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function has(RequesterInterface $requester, ResourceInterface $resource)
+    {
+        return isset($this->buffer[$requester->getAclRequesterIdentifier()][$resource->getAclResourceIdentifier()]);
     }
 }
