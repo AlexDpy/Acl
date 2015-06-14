@@ -9,20 +9,17 @@ use AlexDpy\Acl\Model\Permission;
 use AlexDpy\Acl\Model\PermissionInterface;
 use AlexDpy\Acl\Model\Requester;
 use AlexDpy\Acl\Model\Resource;
+use Doctrine\Common\Cache\ArrayCache;
 
 class PermissionBufferTest extends \PHPUnit_Framework_TestCase
 {
     public function testAdd()
     {
-        $permissionBuffer = $this->getPermissionBuffer();
+        $cacheProvider = $this->prophesize('Doctrine\Common\Cache\CacheProvider');
+        $permissionBuffer = $this->getPermissionBuffer($cacheProvider->reveal());
         $permissionBuffer->add($this->generatePermission('alice', 'foo'));
-        $buffer = $this->getReflectionBufferValue($permissionBuffer);
 
-        $this->assertTrue(($isset = isset($buffer['alicefoo'])));
-
-        if ($isset) {
-            $this->assertInstanceOf('AlexDpy\Acl\Model\PermissionInterface', $buffer['alicefoo']);
-        }
+        $this->assertInstanceOf('AlexDpy\Acl\Model\PermissionInterface', $permissionBuffer->get(new Requester('alice'), new Resource('foo')));
     }
 
     public function testRemove()
@@ -104,8 +101,8 @@ class PermissionBufferTest extends \PHPUnit_Framework_TestCase
     /**
      * @return PermissionBufferInterface
      */
-    private function getPermissionBuffer()
+    private function getPermissionBuffer($cacheProvider = null)
     {
-        return new PermissionBuffer();
+        return new PermissionBuffer($cacheProvider);
     }
 }

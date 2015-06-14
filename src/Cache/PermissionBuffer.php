@@ -6,14 +6,10 @@ use AlexDpy\Acl\Model\PermissionInterface;
 use AlexDpy\Acl\Model\RequesterInterface;
 use AlexDpy\Acl\Model\ResourceInterface;
 use Doctrine\Common\Cache\CacheProvider;
+use Doctrine\Common\Cache\VoidCache;
 
 class PermissionBuffer implements PermissionBufferInterface
 {
-    /**
-     * @var array
-     */
-    protected $buffer;
-
     /**
      * @var CacheProvider
      */
@@ -24,7 +20,8 @@ class PermissionBuffer implements PermissionBufferInterface
      */
     public function __construct(CacheProvider $cacheProvider = null)
     {
-        $this->cacheProvider = $cacheProvider;
+        $this->cacheProvider = $cacheProvider === null ? new VoidCache() : $cacheProvider;
+        $this->cacheProvider->setNamespace('acl');
     }
 
     /**
@@ -33,12 +30,7 @@ class PermissionBuffer implements PermissionBufferInterface
     public function add(PermissionInterface $permission)
     {
         $cacheId = $this->getCacheId($permission->getRequester(), $permission->getResource());
-
-        $this->buffer[$cacheId] = $permission;
-
-        if ($this->hasCacheProvider()) {
-            $this->cacheProvider->save($cacheId, $permission);
-        }
+        $this->cacheProvider->save($cacheId, $permission);
 
         return $this;
     }
@@ -50,11 +42,7 @@ class PermissionBuffer implements PermissionBufferInterface
     {
         $cacheId = $this->getCacheId($permission->getRequester(), $permission->getResource());
 
-        unset($this->buffer[$cacheId]);
-
-        if ($this->hasCacheProvider()) {
-            $this->cacheProvider->delete($cacheId);
-        }
+        $this->cacheProvider->delete($cacheId);
 
         return $this;
     }
@@ -66,29 +54,15 @@ class PermissionBuffer implements PermissionBufferInterface
     {
         $cacheId = $this->getCacheId($requester, $resource);
 
-        if (isset($this->buffer[$cacheId])) {
-            return $this->buffer[$cacheId];
+        $permission = $this->cacheProvider->fetch($cacheId);
+
+        if ($permission instanceof PermissionInterface) {
+            return $permission;
         }
 
-        if ($this->hasCacheProvider()) {
-            $permission = $this->cacheProvider->fetch($cacheId);
-
-            if ($permission instanceof PermissionInterface) {
-                return $permission;
-            }
-
-            $this->cacheProvider->delete($cacheId);
-        }
+        $this->cacheProvider->delete($cacheId);
 
         return null;
-    }
-
-    /**
-     * @return bool
-     */
-    protected function hasCacheProvider()
-    {
-        return null !== $this->cacheProvider;
     }
 
     /**

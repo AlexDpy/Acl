@@ -4,6 +4,7 @@ namespace Tests\AlexDpy\Acl;
 
 use AlexDpy\Acl\Acl;
 use AlexDpy\Acl\AclInterface;
+use AlexDpy\Acl\Cache\PermissionBuffer;
 use AlexDpy\Acl\Schema\AclSchema;
 use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Connection;
@@ -49,6 +50,6 @@ abstract class AbstractAclTest extends \PHPUnit_Framework_TestCase
             });
 
         $this->connection = $connection;
-        $this->acl = new Acl($connection);
+        $this->acl = new Acl($connection, new PermissionBuffer());
     }
 }
