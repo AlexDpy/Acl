@@ -18,10 +18,10 @@ class PermissionBufferTest extends \PHPUnit_Framework_TestCase
         $permissionBuffer->add($this->generatePermission('alice', 'foo'));
         $buffer = $this->getReflectionBufferValue($permissionBuffer);
 
-        $this->assertTrue(($isset = isset($buffer['alice']['foo'])));
+        $this->assertTrue(($isset = isset($buffer['alicefoo'])));
 
         if ($isset) {
-            $this->assertInstanceOf('AlexDpy\Acl\Model\PermissionInterface', $buffer['alice']['foo']);
+            $this->assertInstanceOf('AlexDpy\Acl\Model\PermissionInterface', $buffer['alicefoo']);
         }
     }
 
@@ -29,29 +29,15 @@ class PermissionBufferTest extends \PHPUnit_Framework_TestCase
     {
         $permissionBuffer = $this->getPermissionBuffer();
         $this->setReflectionBufferValue($permissionBuffer, [
-            'alice' => [
-                'foo' => $this->generatePermission('alice', 'foo', 4),
-                'bar' => $this->generatePermission('alice', 'bar', 4),
-            ]
+            'alicefoo' => $this->generatePermission('alice', 'foo', 4),
+            'alicebar' => $this->generatePermission('alice', 'bar', 4),
         ]);
 
         $permissionBuffer->remove($this->generatePermission('alice', 'foo', 4));
 
         $buffer = $this->getReflectionBufferValue($permissionBuffer);
-        $this->assertFalse(isset($buffer['alice']['foo']));
-        $this->assertTrue(isset($buffer['alice']['bar']));
-    }
-
-    public function testHas()
-    {
-        $permissionBuffer = $this->getPermissionBuffer();
-        $this->setReflectionBufferValue($permissionBuffer, [
-            'alice' => ['foo' => $this->generatePermission('alice', 'foo', 4)]
-        ]);
-
-        $this->assertTrue($permissionBuffer->has(new Requester('alice'), new Resource('foo')));
-        $this->assertFalse($permissionBuffer->has(new Requester('alice'), new Resource('bar')));
-        $this->assertFalse($permissionBuffer->has(new Requester('mallory'), new Resource('foo')));
+        $this->assertFalse(isset($buffer['alicefoo']));
+        $this->assertTrue(isset($buffer['alicebar']));
     }
 
     public function testGet()
@@ -59,7 +45,7 @@ class PermissionBufferTest extends \PHPUnit_Framework_TestCase
         $permissionBuffer = $this->getPermissionBuffer();
         $aliceFooPermission = $this->generatePermission('alice', 'foo', 4);
         $this->setReflectionBufferValue($permissionBuffer, [
-            'alice' => ['foo' => $aliceFooPermission]
+            'alicefoo' => $aliceFooPermission
         ]);
 
         $this->assertEquals(

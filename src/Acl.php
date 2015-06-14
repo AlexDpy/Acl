@@ -11,6 +11,7 @@ use AlexDpy\Acl\Model\Permission;
 use AlexDpy\Acl\Model\PermissionInterface;
 use AlexDpy\Acl\Model\RequesterInterface;
 use AlexDpy\Acl\Model\ResourceInterface;
+use Doctrine\Common\Cache\CacheProvider;
 use Doctrine\DBAL\Connection;
 
 class Acl implements AclInterface
@@ -36,13 +37,17 @@ class Acl implements AclInterface
     protected $permissionsTable = 'acl_permissions';
 
     /**
-     * @param Connection $connection
-     * @param string     $maskBuilderClass
+     * @param Connection         $connection
+     * @param string             $maskBuilderClass
+     * @param CacheProvider|null $cacheProvider
      *
      * @throws \InvalidArgumentException
      */
-    public function __construct(Connection $connection, $maskBuilderClass = 'AlexDpy\Acl\Mask\BasicMaskBuilder')
-    {
+    public function __construct(
+        Connection $connection,
+        $maskBuilderClass = 'AlexDpy\Acl\Mask\BasicMaskBuilder',
+        CacheProvider $cacheProvider = null
+    ) {
         if (!class_exists($maskBuilderClass)) {
             throw new \InvalidArgumentException(sprintf('Class "%s" does not exist', $maskBuilderClass));
         }
@@ -55,7 +60,9 @@ class Acl implements AclInterface
 
         $this->connection = $connection;
 
-        $this->permissionBuffer = new PermissionBuffer();
+        $permissionBuffer = new PermissionBuffer($cacheProvider);
+
+        $this->permissionBuffer = $permissionBuffer;
     }
 
     /**
@@ -194,6 +201,26 @@ class Acl implements AclInterface
      */
     protected function savePermission(PermissionInterface $permission)
     {
+        if (0 === $permission->getMask()) {
+            if ($permission->isPersistent()) {
+                $this->connection->delete(
+                    $this->permissionsTable,
+                    [
+                        'requester' => $permission->getRequester()->getAclRequesterIdentifier(),
+                        'resource' => $permission->getResource()->getAclResourceIdentifier()
+                    ],
+                    [
+                        'requester' => \PDO::PARAM_STR,
+                        'resource' => \PDO::PARAM_STR,
+                    ]
+                );
+            }
+
+            $this->permissionBuffer->remove($permission);
+
+            return;
+        }
+
         if ($permission->isPersistent()) {
             $this->connection->update(
                 $this->permissionsTable,
