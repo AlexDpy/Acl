@@ -6,96 +6,85 @@ use AlexDpy\Acl\Cache\PermissionBuffer;
 use AlexDpy\Acl\Cache\PermissionBufferInterface;
 use AlexDpy\Acl\Mask\BasicMaskBuilder;
 use AlexDpy\Acl\Model\Permission;
-use AlexDpy\Acl\Model\PermissionInterface;
 use AlexDpy\Acl\Model\Requester;
+use AlexDpy\Acl\Model\RequesterInterface;
 use AlexDpy\Acl\Model\Resource;
-use Doctrine\Common\Cache\ArrayCache;
+use AlexDpy\Acl\Model\ResourceInterface;
+use Prophecy\Argument;
 
 class PermissionBufferTest extends \PHPUnit_Framework_TestCase
 {
-    public function testAdd()
-    {
-        $cacheProvider = $this->prophesize('Doctrine\Common\Cache\CacheProvider');
-        $permissionBuffer = $this->getPermissionBuffer($cacheProvider->reveal());
-        $permissionBuffer->add($this->generatePermission('alice', 'foo'));
+    protected $cache;
 
-        $this->assertInstanceOf('AlexDpy\Acl\Model\PermissionInterface', $permissionBuffer->get(new Requester('alice'), new Resource('foo')));
+    public function setup()
+    {
+        $this->cache = $this->prophesize('Doctrine\Common\Cache\CacheProvider');
+        $this->cache->setNamespace('acl')->shouldBeCalled();
+
+        parent::setUp();
     }
 
-    public function testRemove()
+    protected function generateCacheId(RequesterInterface $requester, ResourceInterface $resource)
     {
-        $permissionBuffer = $this->getPermissionBuffer();
-        $this->setReflectionBufferValue($permissionBuffer, [
-            'alicefoo' => $this->generatePermission('alice', 'foo', 4),
-            'alicebar' => $this->generatePermission('alice', 'bar', 4),
-        ]);
+        $reflection = new \ReflectionClass($permissionBuffer = new PermissionBuffer());
+        $method = $reflection->getMethod('getCacheId');
+        $method->setAccessible(true);
 
-        $permissionBuffer->remove($this->generatePermission('alice', 'foo', 4));
-
-        $buffer = $this->getReflectionBufferValue($permissionBuffer);
-        $this->assertFalse(isset($buffer['alicefoo']));
-        $this->assertTrue(isset($buffer['alicebar']));
+        return $method->invokeArgs($permissionBuffer, array($requester, $resource));
     }
 
-    public function testGet()
+    protected function tearDown()
     {
-        $permissionBuffer = $this->getPermissionBuffer();
-        $aliceFooPermission = $this->generatePermission('alice', 'foo', 4);
-        $this->setReflectionBufferValue($permissionBuffer, [
-            'alicefoo' => $aliceFooPermission
-        ]);
+        $this->cache = null;
+        parent::tearDown();
+    }
 
-        $this->assertEquals(
-            $aliceFooPermission,
-            $permissionBuffer->get(new Requester('alice'), new Resource('foo'))
+    public function permissionProvider()
+    {
+        return array(
+            array(
+                $requester = new Requester('alice'),
+                $resource = new Resource('foo'),
+                new Permission($requester, $resource, new BasicMaskBuilder(4)),
+                $this->generateCacheId($requester, $resource)
+            ),
+            array(
+                $requester = new Requester('alice'),
+                $resource = new Resource('bar'),
+                new Permission($requester, $resource, new BasicMaskBuilder(4)),
+                $this->generateCacheId($requester, $resource)
+            )
         );
-        $this->assertNull($permissionBuffer->get(new Requester('alice'), new Resource('bar')));
-        $this->assertNull($permissionBuffer->get(new Requester('mallory'), new Resource('foo')));
     }
 
     /**
-     * @param PermissionBufferInterface $permissionBuffer
-     *
-     * @return mixed
+     * @dataProvider permissionProvider
      */
-    private function getReflectionBufferValue(PermissionBufferInterface $permissionBuffer)
+    public function testAdd(Requester $requester, Resource $resource, Permission $permission, $cacheId)
     {
-        $reflection = new \ReflectionObject($permissionBuffer);
-        $bufferProperty = $reflection->getProperty('buffer');
-        $bufferProperty->setAccessible(true);
-
-        return $bufferProperty->getValue($permissionBuffer);
+        $this->cache->save($cacheId, $permission)->shouldBeCalled();
+        $permissionBuffer = $this->getPermissionBuffer($this->cache->reveal());
+        $permissionBuffer->add($permission);
     }
 
     /**
-     * @param PermissionBufferInterface $permissionBuffer
-     * @param array                     $value
-     *
-     * @throws \InvalidArgumentException
+     * @dataProvider permissionProvider
      */
-    private function setReflectionBufferValue(PermissionBufferInterface $permissionBuffer, array $value)
+    public function testRemove(Requester $requester, Resource $resource, Permission $permission, $cacheId)
     {
-        $reflection = new \ReflectionObject($permissionBuffer);
-        $bufferProperty = $reflection->getProperty('buffer');
-        $bufferProperty->setAccessible(true);
-
-        $bufferProperty->setValue($permissionBuffer, $value);
+        $this->cache->delete($cacheId)->shouldBeCalled();
+        $permissionBuffer = $this->getPermissionBuffer($this->cache->reveal());
+        $permissionBuffer->remove($permission);
     }
 
     /**
-     * @param string $requesterIdentifier
-     * @param string $resourceIdentifier
-     * @param int    $mask
-     *
-     * @return PermissionInterface
+     * @dataProvider permissionProvider
      */
-    private function generatePermission($requesterIdentifier, $resourceIdentifier, $mask = 0)
+    public function testGet(Requester $requester, Resource $resource, Permission $permission, $cacheId)
     {
-        return new Permission(
-            new Requester($requesterIdentifier),
-            new Resource($resourceIdentifier),
-            new BasicMaskBuilder($mask)
-        );
+        $this->cache->fetch($cacheId)->willReturn($permission)->shouldBeCalled();
+        $permissionBuffer = $this->getPermissionBuffer($this->cache->reveal());
+        $this->assertEquals($permissionBuffer->get($requester, $resource), $permission);
     }
 
     /**
