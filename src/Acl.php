@@ -2,7 +2,6 @@
 
 namespace AlexDpy\Acl;
 
-use AlexDpy\Acl\Cache\PermissionBuffer;
 use AlexDpy\Acl\Cache\PermissionBufferInterface;
 use AlexDpy\Acl\Exception\PermissionNotFoundException;
 use AlexDpy\Acl\Mask\MaskBuilderInterface;
@@ -45,8 +44,8 @@ class Acl implements AclInterface
      */
     public function __construct(
         Connection $connection,
-        $maskBuilderClass = 'AlexDpy\Acl\Mask\BasicMaskBuilder',
-        CacheProvider $cacheProvider = null
+        PermissionBufferInterface $permissionBuffer,
+        $maskBuilderClass = 'AlexDpy\Acl\Mask\BasicMaskBuilder'
     ) {
         if (!class_exists($maskBuilderClass)) {
             throw new \InvalidArgumentException(sprintf('Class "%s" does not exist', $maskBuilderClass));
@@ -59,9 +58,6 @@ class Acl implements AclInterface
         }
 
         $this->connection = $connection;
-
-        $permissionBuffer = new PermissionBuffer($cacheProvider);
-
         $this->permissionBuffer = $permissionBuffer;
     }
 
