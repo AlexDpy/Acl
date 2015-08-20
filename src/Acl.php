@@ -36,9 +36,9 @@ class Acl implements AclInterface
     protected $permissionsTable = 'acl_permissions';
 
     /**
-     * @param Connection         $connection
-     * @param string             $maskBuilderClass
-     * @param CacheProvider|null $cacheProvider
+     * @param Connection                $connection
+     * @param PermissionBufferInterface $permissionBuffer
+     * @param string                    $maskBuilderClass
      *
      * @throws \InvalidArgumentException
      */
