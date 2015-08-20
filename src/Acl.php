@@ -33,19 +33,21 @@ class Acl implements AclInterface
     /**
      * @var string
      */
-    protected $permissionsTable = 'acl_permissions';
+    protected $permissionsTable;
 
     /**
      * @param Connection                $connection
      * @param PermissionBufferInterface $permissionBuffer
      * @param string                    $maskBuilderClass
+     * @param string                    $permissionsTable
      *
      * @throws \InvalidArgumentException
      */
     public function __construct(
         Connection $connection,
         PermissionBufferInterface $permissionBuffer,
-        $maskBuilderClass = 'AlexDpy\Acl\Mask\BasicMaskBuilder'
+        $maskBuilderClass = 'AlexDpy\Acl\Mask\BasicMaskBuilder',
+        $permissionsTable = 'acl_permissions'
     ) {
         if (!class_exists($maskBuilderClass)) {
             throw new \InvalidArgumentException(sprintf('Class "%s" does not exist', $maskBuilderClass));
@@ -59,6 +61,7 @@ class Acl implements AclInterface
 
         $this->connection = $connection;
         $this->permissionBuffer = $permissionBuffer;
+        $this->permissionsTable = $permissionsTable;
     }
 
     /**
