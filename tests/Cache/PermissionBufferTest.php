@@ -19,7 +19,6 @@ class PermissionBufferTest extends \PHPUnit_Framework_TestCase
     public function setup()
     {
         $this->cache = $this->prophesize('Doctrine\Common\Cache\CacheProvider');
-        $this->cache->setNamespace('acl')->shouldBeCalled();
 
         parent::setUp();
     }
