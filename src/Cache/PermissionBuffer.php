@@ -21,7 +21,6 @@ class PermissionBuffer implements PermissionBufferInterface
     public function __construct(CacheProvider $cacheProvider = null)
     {
         $this->cacheProvider = $cacheProvider === null ? new VoidCache() : $cacheProvider;
-        $this->cacheProvider->setNamespace('acl');
     }
 
     /**
