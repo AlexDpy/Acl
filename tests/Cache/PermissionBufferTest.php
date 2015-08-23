@@ -10,7 +10,6 @@ use AlexDpy\Acl\Model\Requester;
 use AlexDpy\Acl\Model\RequesterInterface;
 use AlexDpy\Acl\Model\Resource;
 use AlexDpy\Acl\Model\ResourceInterface;
-use Prophecy\Argument;
 
 class PermissionBufferTest extends \PHPUnit_Framework_TestCase
 {
@@ -45,14 +44,14 @@ class PermissionBufferTest extends \PHPUnit_Framework_TestCase
                 $requester = new Requester('alice'),
                 $resource = new Resource('foo'),
                 new Permission($requester, $resource, new BasicMaskBuilder(4)),
-                $this->generateCacheId($requester, $resource)
+                $this->generateCacheId($requester, $resource),
             ),
             array(
                 $requester = new Requester('alice'),
                 $resource = new Resource('bar'),
                 new Permission($requester, $resource, new BasicMaskBuilder(4)),
-                $this->generateCacheId($requester, $resource)
-            )
+                $this->generateCacheId($requester, $resource),
+            ),
         );
     }
 

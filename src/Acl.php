@@ -10,7 +10,6 @@ use AlexDpy\Acl\Model\Permission;
 use AlexDpy\Acl\Model\PermissionInterface;
 use AlexDpy\Acl\Model\RequesterInterface;
 use AlexDpy\Acl\Model\ResourceInterface;
-use Doctrine\Common\Cache\CacheProvider;
 use Doctrine\DBAL\Connection;
 
 class Acl implements AclInterface
@@ -71,7 +70,6 @@ class Acl implements AclInterface
     {
         try {
             $permission = $this->findPermission($requester, $resource);
-
         } catch (PermissionNotFoundException $e) {
             $permission = $this->initPermission($requester, $resource);
         }
@@ -90,7 +88,6 @@ class Acl implements AclInterface
     {
         try {
             $permission = $this->findPermission($requester, $resource);
-
         } catch (PermissionNotFoundException $e) {
             $permission = $this->initPermission($requester, $resource);
         }
@@ -118,7 +115,7 @@ class Acl implements AclInterface
      *
      * @return bool
      */
-    protected function processIsGranted(RequesterInterface $requester, ResourceInterface $resource, $action, &$buffer = [])
+    protected function processIsGranted(RequesterInterface $requester, ResourceInterface $resource, $action, &$buffer = array())
     {
         try {
             $permission = $this->findPermission($requester, $resource);
@@ -151,6 +148,7 @@ class Acl implements AclInterface
      * @param ResourceInterface  $resource
      *
      * @return PermissionInterface
+     *
      * @throws Exception\PermissionNotFoundException
      */
     protected function findPermission(RequesterInterface $requester, ResourceInterface $resource)
@@ -158,15 +156,15 @@ class Acl implements AclInterface
         if (null === $permission = $this->permissionBuffer->get($requester, $resource)) {
             if (false === $mask = $this->connection->fetchColumn(
                 'SELECT mask FROM ' . $this->permissionsTable . ' WHERE requester = :requester AND resource = :resource',
-                [
+                array(
                     'requester' => $requester->getAclRequesterIdentifier(),
-                    'resource' => $resource->getAclResourceIdentifier()
-                ],
+                    'resource' => $resource->getAclResourceIdentifier(),
+                ),
                 0,
-                [
+                array(
                     'requester' => \PDO::PARAM_STR,
-                    'resource' => \PDO::PARAM_STR
-                ]
+                    'resource' => \PDO::PARAM_STR,
+                )
             )) {
                 throw new PermissionNotFoundException($requester, $resource);
             }
@@ -204,14 +202,14 @@ class Acl implements AclInterface
             if ($permission->isPersistent()) {
                 $this->connection->delete(
                     $this->permissionsTable,
-                    [
+                    array(
                         'requester' => $permission->getRequester()->getAclRequesterIdentifier(),
-                        'resource' => $permission->getResource()->getAclResourceIdentifier()
-                    ],
-                    [
+                        'resource' => $permission->getResource()->getAclResourceIdentifier(),
+                    ),
+                    array(
                         'requester' => \PDO::PARAM_STR,
                         'resource' => \PDO::PARAM_STR,
-                    ]
+                    )
                 );
 
                 $permission->setPersistent(false);
@@ -225,30 +223,30 @@ class Acl implements AclInterface
         if ($permission->isPersistent()) {
             $this->connection->update(
                 $this->permissionsTable,
-                ['mask' => $permission->getMask()],
-                [
+                array('mask' => $permission->getMask()),
+                array(
                     'requester' => $permission->getRequester()->getAclRequesterIdentifier(),
-                    'resource' => $permission->getResource()->getAclResourceIdentifier()
-                ],
-                [
+                    'resource' => $permission->getResource()->getAclResourceIdentifier(),
+                ),
+                array(
                     'mask' => \PDO::PARAM_INT,
                     'requester' => \PDO::PARAM_STR,
                     'resource' => \PDO::PARAM_STR,
-                ]
+                )
             );
         } else {
             $this->connection->insert(
                 $this->permissionsTable,
-                [
+                array(
                     'requester' => $permission->getRequester()->getAclRequesterIdentifier(),
                     'resource' => $permission->getResource()->getAclResourceIdentifier(),
-                    'mask' => $permission->getMask()
-                ],
-                [
+                    'mask' => $permission->getMask(),
+                ),
+                array(
                     'mask' => \PDO::PARAM_INT,
                     'requester' => \PDO::PARAM_STR,
                     'resource' => \PDO::PARAM_STR,
-                ]
+                )
             );
             $permission->setPersistent(true);
         }

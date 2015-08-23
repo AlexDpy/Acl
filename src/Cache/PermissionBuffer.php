@@ -61,7 +61,7 @@ class PermissionBuffer implements PermissionBufferInterface
 
         $this->cacheProvider->delete($cacheId);
 
-        return null;
+        return;
     }
 
     /**

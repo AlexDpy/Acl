@@ -34,7 +34,7 @@ abstract class AbstractAclTest extends \PHPUnit_Framework_TestCase
             $this->markTestSkipped('This test requires SQLite support in your environment.');
         }
 
-        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite'], new Configuration());
+        $connection = DriverManager::getConnection(array('driver' => 'pdo_sqlite'), new Configuration());
 
         $schema = new AclSchema();
 
@@ -48,7 +48,7 @@ abstract class AbstractAclTest extends \PHPUnit_Framework_TestCase
             $connection->rollBack();
         }
 
-        $connection->transactional(function(Connection $connection) use ($schema) {
+        $connection->transactional(function (Connection $connection) use ($schema) {
                 foreach ($schema->toSql($connection->getDatabasePlatform()) as $query) {
                     $connection->exec($query);
                 }

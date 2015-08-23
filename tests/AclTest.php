@@ -2,8 +2,6 @@
 
 namespace Tests\AlexDpy\Acl;
 
-use AlexDpy\Acl\Mask\BasicMaskBuilder;
-use AlexDpy\Acl\Model\Permission;
 use AlexDpy\Acl\Model\Requester;
 use AlexDpy\Acl\Model\RequesterInterface;
 use AlexDpy\Acl\Model\Resource;
@@ -62,7 +60,7 @@ class AclTest extends AbstractAclTest
 
     public function testGrantWithArrayParameter()
     {
-        $this->acl->grant($this->aliceRequester, $this->fooResource, ['view']);
+        $this->acl->grant($this->aliceRequester, $this->fooResource, array('view'));
         $this->assertEquals(1, $this->findMask($this->aliceRequester, $this->fooResource));
     }
 
@@ -77,7 +75,7 @@ class AclTest extends AbstractAclTest
 
     public function testGrantManyActionsAtTheSameTime()
     {
-        $this->acl->grant($this->aliceRequester, $this->fooResource, ['view', 'edit']);
+        $this->acl->grant($this->aliceRequester, $this->fooResource, array('view', 'edit'));
         $this->assertEquals(3, $this->findMask($this->aliceRequester, $this->fooResource));
     }
 
@@ -120,7 +118,7 @@ class AclTest extends AbstractAclTest
     {
         $this->insertPermission($this->aliceRequester, $this->fooResource, 1 + 2 + 4);
 
-        $this->acl->revoke($this->aliceRequester, $this->fooResource, ['create']);
+        $this->acl->revoke($this->aliceRequester, $this->fooResource, array('create'));
         $this->assertEquals(3, $this->findMask($this->aliceRequester, $this->fooResource));
     }
 
@@ -139,7 +137,7 @@ class AclTest extends AbstractAclTest
     {
         $this->insertPermission($this->aliceRequester, $this->fooResource, 1 + 2 + 4);
 
-        $this->acl->revoke($this->aliceRequester, $this->fooResource, ['view', 'edit']);
+        $this->acl->revoke($this->aliceRequester, $this->fooResource, array('view', 'edit'));
         $this->assertEquals(4, $this->findMask($this->aliceRequester, $this->fooResource));
     }
 
@@ -248,7 +246,7 @@ class AclTest extends AbstractAclTest
 
     public function testIsGrantedWithCascadingRequester()
     {
-        $alice = new User('alice', ['ROLE_USER', 'ROLE_EDITOR']);
+        $alice = new User('alice', array('ROLE_USER', 'ROLE_EDITOR'));
 
         $this->insertPermission(new Requester('ROLE_ADMIN'), $this->fooResource, 1 + 2 + 4 + 8);
         $this->insertPermission(new Requester('ROLE_EDITOR'), $this->fooResource, 1 + 2 + 4);
@@ -262,9 +260,9 @@ class AclTest extends AbstractAclTest
 
     public function testCascadingRequesterCircularReferenceImplementation()
     {
-        $bob = new UserCircularCascading('bob', ['mallory']);
-        $mallory = new UserCircularCascading('mallory', ['bob']);
-        $oscar = new UserCircularCascading('oscar', ['bob', 'mallory']);
+        $bob = new UserCircularCascading('bob', array('mallory'));
+        $mallory = new UserCircularCascading('mallory', array('bob'));
+        $oscar = new UserCircularCascading('oscar', array('bob', 'mallory'));
 
         $this->assertFalse($this->acl->isGranted($bob, $this->fooResource, 'view'));
         $this->assertFalse($this->acl->isGranted($oscar, $this->fooResource, 'edit'));
@@ -283,9 +281,9 @@ class AclTest extends AbstractAclTest
     public function testIsGrantedWithManyCascadingRequesterLevels()
     {
         $oscar = new UserCascading('oscar');
-        $mallory = new UserCascading('mallory', [$oscar]);
-        $bob = new UserCascading('bob', [$mallory]);
-        $alice = new UserCascading('alice', [$bob]);
+        $mallory = new UserCascading('mallory', array($oscar));
+        $bob = new UserCascading('bob', array($mallory));
+        $alice = new UserCascading('alice', array($bob));
 
         $this->insertPermission($oscar, $this->fooResource, 1);
         $this->insertPermission($mallory, $this->fooResource, 2);
@@ -323,15 +321,15 @@ class AclTest extends AbstractAclTest
     {
         return (int) $this->connection->fetchColumn(
             'SELECT mask FROM acl_permissions WHERE requester = :requester AND resource = :resource',
-            [
+            array(
                 'requester' => $requester->getAclRequesterIdentifier(),
-                'resource' => $resource->getAclResourceIdentifier()
-            ],
+                'resource' => $resource->getAclResourceIdentifier(),
+            ),
             0,
-            [
+            array(
                 'requester' => \PDO::PARAM_STR,
-                'resource' => \PDO::PARAM_STR
-            ]
+                'resource' => \PDO::PARAM_STR,
+            )
         );
     }
 
@@ -344,16 +342,16 @@ class AclTest extends AbstractAclTest
     {
         $this->connection->insert(
             'acl_permissions',
-            [
+            array(
                 'requester' => $requester->getAclRequesterIdentifier(),
                 'resource' => $resource->getAclResourceIdentifier(),
-                'mask' => $mask
-            ],
-            [
+                'mask' => $mask,
+            ),
+            array(
                 'requester' => \PDO::PARAM_STR,
                 'resource' => \PDO::PARAM_STR,
-                'mask' => \PDO::PARAM_INT
-            ]
+                'mask' => \PDO::PARAM_INT,
+            )
         );
     }
 }

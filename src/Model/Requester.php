@@ -25,4 +25,3 @@ final class Requester implements RequesterInterface
         return $this->aclRequesterIdentifier;
     }
 }
- 

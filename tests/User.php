@@ -22,7 +22,7 @@ class User implements CascadingRequesterInterface
      * @param string   $username
      * @param string[] $roles
      */
-    public function __construct($username, array $roles = [])
+    public function __construct($username, array $roles = array())
     {
         $this->username = $username;
         $this->roles = $roles;
@@ -41,7 +41,7 @@ class User implements CascadingRequesterInterface
      */
     public function getAclParentsRequester()
     {
-        $parents = [];
+        $parents = array();
 
         foreach ($this->roles as $role) {
             $parents[] = new Requester($role);

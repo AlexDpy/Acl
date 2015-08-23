@@ -12,7 +12,7 @@ interface AclInterface
      * @param ResourceInterface  $resource
      * @param string             $action
      *
-     * @return boolean
+     * @return bool
      */
     public function isGranted(RequesterInterface $requester, ResourceInterface $resource, $action);
 

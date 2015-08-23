@@ -4,7 +4,6 @@ namespace Tests\AlexDpy\Acl\Mask;
 
 use AlexDpy\Acl\Mask\AbstractMaskBuilder;
 use AlexDpy\Acl\Mask\BasicMaskBuilder;
-use AlexDpy\Acl\Mask\MaskBuilderInterface;
 
 class MaskBuilderTest extends \PHPUnit_Framework_TestCase
 {
@@ -23,7 +22,6 @@ class MaskBuilderTest extends \PHPUnit_Framework_TestCase
             $maskBuilder->set('im not an integer');
             $this->fail();
         } catch (\InvalidArgumentException $e) {
-
         }
     }
 
@@ -95,7 +93,6 @@ class MaskBuilderTest extends \PHPUnit_Framework_TestCase
             $maskBuilder->resolveMask('im a fake');
             $this->fail();
         } catch (\InvalidArgumentException $e) {
-
         }
     }
 
