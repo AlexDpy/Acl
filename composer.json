@@ -10,6 +10,7 @@
     "license": "MIT",
     "type": "library",
     "require": {
+        "php": ">=5.3",
         "doctrine/dbal": "~2.4",
         "doctrine/cache": "^1.4.1"
     },
