@@ -32,4 +32,20 @@ class AclSchema extends Schema
             ->addUniqueIndex(['resource', 'requester'])
             ->addIndex(['resource', 'requester']);
     }
+
+    /**
+     * Merges AclSchema with the given schema.
+     *
+     * @param Schema $schema
+     */
+    public function addToSchema(Schema $schema)
+    {
+        foreach ($this->getTables() as $table) {
+            $schema->_addTable($table);
+        }
+
+        foreach ($this->getSequences() as $sequence) {
+            $schema->_addSequence($sequence);
+        }
+    }
 }
