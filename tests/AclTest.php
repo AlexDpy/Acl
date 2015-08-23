@@ -2,10 +2,13 @@
 
 namespace Tests\AlexDpy\Acl;
 
+use AlexDpy\Acl\Mask\BasicMaskBuilder;
+use AlexDpy\Acl\Model\Permission;
 use AlexDpy\Acl\Model\Requester;
 use AlexDpy\Acl\Model\RequesterInterface;
 use AlexDpy\Acl\Model\Resource;
 use AlexDpy\Acl\Model\ResourceInterface;
+use Prophecy\Argument;
 
 class AclTest extends AbstractAclTest
 {
@@ -45,6 +48,14 @@ class AclTest extends AbstractAclTest
 
     public function testGrant()
     {
+        $this->permissionBuffer->get(
+            Argument::exact($this->aliceRequester),
+            Argument::exact($this->fooResource)
+        )->shouldBeCalled();
+        $this->permissionBuffer->add(
+            Argument::type('AlexDpy\Acl\Model\Permission')
+        )->shouldBeCalled();
+
         $this->acl->grant($this->aliceRequester, $this->fooResource, 'view');
         $this->assertEquals(1, $this->findMask($this->aliceRequester, $this->fooResource));
     }
@@ -92,6 +103,14 @@ class AclTest extends AbstractAclTest
     public function testRevoke()
     {
         $this->insertPermission($this->aliceRequester, $this->fooResource, 1 + 2 + 4);
+
+        $this->permissionBuffer->get(
+            Argument::exact($this->aliceRequester),
+            Argument::exact($this->fooResource)
+        )->shouldBeCalled();
+        $this->permissionBuffer->add(
+            Argument::type('AlexDpy\Acl\Model\Permission')
+        )->shouldBeCalled();
 
         $this->acl->revoke($this->aliceRequester, $this->fooResource, 'create');
         $this->assertEquals(3, $this->findMask($this->aliceRequester, $this->fooResource));
@@ -177,6 +196,34 @@ class AclTest extends AbstractAclTest
         $this->assertFalse($this->acl->isGranted($this->bobRequester, $this->barResource, 'delete'));
         $this->assertFalse($this->acl->isGranted($this->malloryRequester, $this->fooResource, 'edit'));
         $this->assertFalse($this->acl->isGranted($this->malloryRequester, $this->fooResource, 'delete'));
+    }
+
+    public function testIsGrantedExceptedPermissionBufferCallsWhenPermissionFound()
+    {
+        $this->insertPermission($this->aliceRequester, $this->fooResource, 1);
+
+        $this->permissionBuffer->get(
+            Argument::exact($this->aliceRequester),
+            Argument::exact($this->fooResource)
+        )->shouldBeCalled();
+        $this->permissionBuffer->add(
+            Argument::type('AlexDpy\Acl\Model\Permission')
+        )->shouldBeCalled();
+
+        $this->acl->isGranted($this->aliceRequester, $this->fooResource, 'view');
+    }
+
+    public function testIsGrantedExpectedPermissionBufferCallsWhenPermissionNotFound()
+    {
+        $this->permissionBuffer->get(
+            Argument::exact($this->aliceRequester),
+            Argument::exact($this->fooResource)
+        )->shouldBeCalled();
+        $this->permissionBuffer->add(
+            Argument::type('AlexDpy\Acl\Model\Permission')
+        )->shouldNotBeCalled();
+
+        $this->acl->isGranted($this->aliceRequester, $this->fooResource, 'view');
     }
 
     public function testIsGrantedWithANonExistentRequester()

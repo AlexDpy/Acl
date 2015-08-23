@@ -10,6 +10,7 @@ use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Exception\TableNotFoundException;
+use Prophecy\Prophecy\ObjectProphecy;
 
 abstract class AbstractAclTest extends \PHPUnit_Framework_TestCase
 {
@@ -17,6 +18,11 @@ abstract class AbstractAclTest extends \PHPUnit_Framework_TestCase
      * @var Connection
      */
     protected $connection;
+
+    /**
+     * @var ObjectProphecy
+     */
+    protected $permissionBuffer;
 
     /**
      * @var AclInterface
@@ -50,6 +56,7 @@ abstract class AbstractAclTest extends \PHPUnit_Framework_TestCase
             });
 
         $this->connection = $connection;
-        $this->acl = new Acl($connection, new PermissionBuffer());
+        $this->permissionBuffer = $this->prophesize('AlexDpy\Acl\Cache\PermissionBufferInterface');
+        $this->acl = new Acl($connection, $this->permissionBuffer->reveal());
     }
 }
