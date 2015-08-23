@@ -4,12 +4,11 @@ namespace Tests\AlexDpy\Acl;
 
 use AlexDpy\Acl\Acl;
 use AlexDpy\Acl\AclInterface;
-use AlexDpy\Acl\Cache\PermissionBuffer;
 use AlexDpy\Acl\Schema\AclSchema;
 use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\DriverManager;
-use Doctrine\DBAL\Exception\TableNotFoundException;
 use Prophecy\Prophecy\ObjectProphecy;
 
 abstract class AbstractAclTest extends \PHPUnit_Framework_TestCase
@@ -45,7 +44,7 @@ abstract class AbstractAclTest extends \PHPUnit_Framework_TestCase
                 $connection->exec($query);
             }
             $connection->commit();
-        } catch (TableNotFoundException $e) {
+        } catch (DBALException $e) { // @see TableNotFoundException for doctrine/dbal > 2.5
             $connection->rollBack();
         }
 
