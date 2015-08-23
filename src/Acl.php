@@ -213,9 +213,11 @@ class Acl implements AclInterface
                         'resource' => \PDO::PARAM_STR,
                     ]
                 );
+
+                $permission->setPersistent(false);
             }
 
-            $this->permissionBuffer->remove($permission);
+            $this->permissionBuffer->add($permission);
 
             return;
         }
