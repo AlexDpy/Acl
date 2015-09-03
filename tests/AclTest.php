@@ -2,6 +2,9 @@
 
 namespace Tests\AlexDpy\Acl;
 
+use AlexDpy\Acl\Mask\BasicMaskBuilder;
+use AlexDpy\Acl\Model\Permission;
+use AlexDpy\Acl\Model\PermissionInterface;
 use AlexDpy\Acl\Model\Requester;
 use AlexDpy\Acl\Model\RequesterInterface;
 use AlexDpy\Acl\Model\Resource;
@@ -44,20 +47,107 @@ class AclTest extends AbstractAclTest
         $this->barResource = new Resource('bar');
     }
 
-    public function testGrant()
+    public function testGrantNotCachedNonexistentPermission()
     {
-        $this->permissionBuffer->get(
-            Argument::exact($this->aliceRequester),
-            Argument::exact($this->fooResource)
-        )->shouldBeCalled();
+        $this->permissionBuffer->get(Argument::exact($this->aliceRequester), Argument::exact($this->fooResource))
+            ->willReturn(null)
+            ->shouldBeCalledTimes(1);
+
+        $this->databaseProvider->findMask(Argument::exact($this->aliceRequester), Argument::exact($this->fooResource))
+            ->shouldBeCalledTimes(1)
+            ->willThrow('AlexDpy\Acl\Exception\MaskNotFoundException');
+
+        $expectedPermission = new Permission($this->aliceRequester, $this->fooResource, new BasicMaskBuilder(1));
+
+        $this->databaseProvider->insertPermission(
+            Argument::that(function(PermissionInterface $permission) use ($expectedPermission) {
+                $this->assertEquals($expectedPermission, $permission);
+                $result = $permission == $expectedPermission;
+                $expectedPermission->setPersistent(true);
+
+                return $result;
+            })
+        )
+            ->shouldBeCalledTimes(1);
+
         $this->permissionBuffer->add(
-            Argument::type('AlexDpy\Acl\Model\Permission')
-        )->shouldBeCalled();
+            Argument::that(function(PermissionInterface $permission) use ($expectedPermission) {
+                $this->assertEquals($expectedPermission, $permission);
+
+                return $permission == $expectedPermission;
+            })
+        )
+            ->shouldBeCalledTimes(1);
 
         $this->acl->grant($this->aliceRequester, $this->fooResource, 'view');
-        $this->assertEquals(1, $this->findMask($this->aliceRequester, $this->fooResource));
     }
 
+    public function testGrantNotCachedExistentPermission()
+    {
+        $this->permissionBuffer->get(Argument::exact($this->aliceRequester), Argument::exact($this->fooResource))
+            ->willReturn(null)
+            ->shouldBeCalledTimes(1);
+
+        $existentPermission = new Permission($this->aliceRequester, $this->fooResource, new BasicMaskBuilder(1));
+        $existentPermission->setPersistent(true);
+
+        $expectedPermission = new Permission($this->aliceRequester, $this->fooResource, new BasicMaskBuilder(3));
+        $expectedPermission->setPersistent(true);
+
+        $this->databaseProvider->findMask(Argument::exact($this->aliceRequester), Argument::exact($this->fooResource))
+            ->shouldBeCalledTimes(1)
+            ->willReturn(1);
+
+        $this->permissionBuffer->add(Argument::type('AlexDpy\Acl\Model\Permission'))
+            ->shouldBeCalledTimes(2);
+
+        $this->databaseProvider->updatePermission(
+            Argument::that(function(PermissionInterface $permission) use ($expectedPermission) {
+                $this->assertEquals($expectedPermission, $permission);
+
+                return $permission == $expectedPermission;
+            })
+        )
+            ->shouldBeCalledTimes(1);
+
+        $this->acl->grant($this->aliceRequester, $this->fooResource, 'edit');
+    }
+
+    public function testGrantCachedNonexistentPermission()
+    {
+        $cachedPermission = new Permission($this->aliceRequester, $this->fooResource, new BasicMaskBuilder(1));
+        $expectedPermission = new Permission($this->aliceRequester, $this->fooResource, new BasicMaskBuilder(3));
+
+        $this->permissionBuffer->get(Argument::exact($this->aliceRequester), Argument::exact($this->fooResource))
+            ->willReturn($cachedPermission)
+            ->shouldBeCalledTimes(1);
+
+        $this->databaseProvider->insertPermission(
+            Argument::that(function(PermissionInterface $permission) use ($expectedPermission) {
+                $this->assertEquals($expectedPermission, $permission);
+                $result = $permission == $expectedPermission;
+                $expectedPermission->setPersistent(true);
+
+                return $result;
+            })
+        )
+            ->shouldBeCalledTimes(1);
+
+        $this->permissionBuffer->add(
+            Argument::that(function(PermissionInterface $permission) use ($expectedPermission) {
+                return $permission == $expectedPermission;
+            })
+        )
+            ->shouldBeCalledTimes(1);
+
+        $this->acl->grant($this->aliceRequester, $this->fooResource, 'edit');
+    }
+
+    public function testGrantCachedExistentPermission()
+    {
+
+    }
+/*
     public function testGrantWithArrayParameter()
     {
         $this->acl->grant($this->aliceRequester, $this->fooResource, array('view'));
@@ -310,7 +400,7 @@ class AclTest extends AbstractAclTest
         $this->assertFalse($this->acl->isGranted($oscar, $this->fooResource, 'create'));
         $this->assertFalse($this->acl->isGranted($oscar, $this->fooResource, 'delete'));
     }
-
+*/
     /**
      * @param RequesterInterface $requester
      * @param ResourceInterface  $resource

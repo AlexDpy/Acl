@@ -3,7 +3,6 @@
 namespace Tests\AlexDpy\Acl;
 
 use AlexDpy\Acl\Acl;
-use AlexDpy\Acl\AclInterface;
 use AlexDpy\Acl\Schema\AclSchema;
 use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Connection;
@@ -21,10 +20,15 @@ abstract class AbstractAclTest extends \PHPUnit_Framework_TestCase
     /**
      * @var ObjectProphecy
      */
+    protected $databaseProvider;
+
+    /**
+     * @var ObjectProphecy
+     */
     protected $permissionBuffer;
 
     /**
-     * @var AclInterface
+     * @var Acl
      */
     protected $acl;
 
@@ -55,7 +59,11 @@ abstract class AbstractAclTest extends \PHPUnit_Framework_TestCase
             });
 
         $this->connection = $connection;
+        $this->databaseProvider = $this->prophesize('AlexDpy\Acl\Database\Provider\DatabaseProviderInterface');
         $this->permissionBuffer = $this->prophesize('AlexDpy\Acl\Cache\PermissionBufferInterface');
-        $this->acl = new Acl($connection, $this->permissionBuffer->reveal());
+        $this->acl = new Acl(
+            $this->databaseProvider->reveal(),
+            $this->permissionBuffer->reveal()
+        );
     }
 }
