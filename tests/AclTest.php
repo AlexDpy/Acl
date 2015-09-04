@@ -135,6 +135,8 @@ class AclTest extends AbstractAclTest
 
         $this->permissionBuffer->add(
             Argument::that(function(PermissionInterface $permission) use ($expectedPermission) {
+                $this->assertEquals($expectedPermission, $permission);
+
                 return $permission == $expectedPermission;
             })
         )
@@ -145,49 +147,60 @@ class AclTest extends AbstractAclTest
 
     public function testGrantCachedExistentPermission()
     {
+        $cachedPermission = new Permission($this->aliceRequester, $this->fooResource, new BasicMaskBuilder(1));
+        $cachedPermission->setPersistent(true);
 
-    }
-/*
-    public function testGrantWithArrayParameter()
-    {
-        $this->acl->grant($this->aliceRequester, $this->fooResource, array('view'));
-        $this->assertEquals(1, $this->findMask($this->aliceRequester, $this->fooResource));
-    }
+        $expectedPermission = new Permission($this->aliceRequester, $this->fooResource, new BasicMaskBuilder(3));
+        $expectedPermission->setPersistent(true);
 
-    public function testGrantManyActionsAtDifferentSteps()
-    {
-        $this->acl->grant($this->aliceRequester, $this->fooResource, 'view');
-        $this->assertEquals(1, $this->findMask($this->aliceRequester, $this->fooResource));
+        $this->permissionBuffer->get(Argument::exact($this->aliceRequester), Argument::exact($this->fooResource))
+            ->willReturn($cachedPermission)
+            ->shouldBeCalledTimes(1);
+
+        $this->databaseProvider->updatePermission(
+            Argument::that(function(PermissionInterface $permission) use ($expectedPermission) {
+                $this->assertEquals($expectedPermission, $permission);
+
+                return $permission == $expectedPermission;
+            })
+        )
+            ->shouldBeCalledTimes(1);
+
+        $this->permissionBuffer->add(
+            Argument::that(function(PermissionInterface $permission) use ($expectedPermission) {
+                $this->assertEquals($expectedPermission, $permission);
+
+                return $permission == $expectedPermission;
+            })
+        )
+            ->shouldBeCalledTimes(1);
 
         $this->acl->grant($this->aliceRequester, $this->fooResource, 'edit');
-        $this->assertEquals(3, $this->findMask($this->aliceRequester, $this->fooResource));
     }
 
-    public function testGrantManyActionsAtTheSameTime()
+    public function testGrantWithArrayParameter()
     {
-        $this->acl->grant($this->aliceRequester, $this->fooResource, array('view', 'edit'));
-        $this->assertEquals(3, $this->findMask($this->aliceRequester, $this->fooResource));
+        $cachedPermission = new Permission($this->aliceRequester, $this->fooResource, new BasicMaskBuilder(1));
+        $cachedPermission->setPersistent(true);
+        $expectedPermission = new Permission($this->aliceRequester, $this->fooResource, new BasicMaskBuilder(7));
+        $expectedPermission->setPersistent(true);
+
+        $this->permissionBuffer->get(Argument::exact($this->aliceRequester), Argument::exact($this->fooResource))
+            ->willReturn($cachedPermission)
+            ->shouldBeCalledTimes(1);
+
+        $this->permissionBuffer->add(
+            Argument::that(function(PermissionInterface $permission) use ($expectedPermission) {
+                $this->assertEquals($expectedPermission, $permission);
+
+                return $permission == $expectedPermission;
+            })
+        )
+            ->shouldBeCalledTimes(1);
+
+        $this->acl->grant($this->aliceRequester, $this->fooResource, array('edit', 'create'));
     }
-
-    public function testGrantUpdatesAPermissionWhenItHasTo()
-    {
-        $this->insertPermission($this->malloryRequester, $this->fooResource, 1);
-
-        $this->acl->grant($this->malloryRequester, $this->fooResource, 'edit');
-        $this->assertEquals(3, $this->findMask($this->malloryRequester, $this->fooResource));
-
-        $this->acl->grant($this->malloryRequester, $this->barResource, 'edit');
-        $this->assertEquals(2, $this->findMask($this->malloryRequester, $this->barResource));
-    }
-
-    public function testGrantAnActionAlreadyGranted()
-    {
-        $this->insertPermission($this->bobRequester, $this->fooResource, 2);
-
-        $this->acl->grant($this->bobRequester, $this->fooResource, 'edit');
-        $this->assertEquals(2, $this->findMask($this->bobRequester, $this->fooResource));
-    }
-
+/*
     public function testRevoke()
     {
         $this->insertPermission($this->aliceRequester, $this->fooResource, 1 + 2 + 4);
