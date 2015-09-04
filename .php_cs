@@ -7,7 +7,7 @@ $finder = Symfony\CS\Finder\DefaultFinder::create()
 
 return Symfony\CS\Config\Config::create()
     ->fixers(array(
-        'long_array_syntax',
+        'short_array_syntax',
         'concat_with_spaces',
     ))
     ->finder($finder)

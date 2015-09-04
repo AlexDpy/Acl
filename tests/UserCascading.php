@@ -21,7 +21,7 @@ class UserCascading implements CascadingRequesterInterface
      * @param string          $username
      * @param UserCascading[] $parents
      */
-    public function __construct($username, array $parents = array())
+    public function __construct($username, array $parents = [])
     {
         $this->username = $username;
         $this->parents = $parents;

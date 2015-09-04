@@ -108,7 +108,7 @@ class Acl implements AclInterface
      *
      * @return bool
      */
-    protected function processIsGranted(RequesterInterface $requester, ResourceInterface $resource, $action, &$buffer = array())
+    protected function processIsGranted(RequesterInterface $requester, ResourceInterface $resource, $action, &$buffer = [])
     {
         try {
             $permission = $this->findPermission($requester, $resource);

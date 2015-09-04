@@ -12,26 +12,26 @@ class AclSchema extends Schema
      * @param array           $options
      * @param Connection|null $connection
      */
-    public function __construct(array $options = array(), Connection $connection = null)
+    public function __construct(array $options = [], Connection $connection = null)
     {
-        parent::__construct(array(), array(), null === $connection ? null : $connection->getSchemaManager()->createSchemaConfig());
+        parent::__construct([], [], null === $connection ? null : $connection->getSchemaManager()->createSchemaConfig());
 
-        $options = array_merge(array(
+        $options = array_merge([
             'permissions_table_name' => 'acl_permissions',
             'requester_column_length' => 255,
             'resource_column_length' => 255,
-        ), $options);
+        ], $options);
 
         $permissionsTable = $this->createTable($options['permissions_table_name']);
 
-        $permissionsTable->addColumn('requester', Type::STRING, array('length' => $options['requester_column_length']));
-        $permissionsTable->addColumn('resource', Type::STRING, array('length' => $options['resource_column_length']));
+        $permissionsTable->addColumn('requester', Type::STRING, ['length' => $options['requester_column_length']]);
+        $permissionsTable->addColumn('resource', Type::STRING, ['length' => $options['resource_column_length']]);
         $permissionsTable->addColumn('mask', Type::INTEGER);
 
         $permissionsTable
-            ->setPrimaryKey(array('requester', 'resource'))
-            ->addUniqueIndex(array('resource', 'requester'))
-            ->addIndex(array('resource', 'requester'));
+            ->setPrimaryKey(['requester', 'resource'])
+            ->addUniqueIndex(['resource', 'requester'])
+            ->addIndex(['resource', 'requester']);
     }
 
     /**

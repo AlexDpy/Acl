@@ -38,7 +38,7 @@ abstract class AbstractAclTest extends \PHPUnit_Framework_TestCase
             $this->markTestSkipped('This test requires SQLite support in your environment.');
         }
 
-        $connection = DriverManager::getConnection(array('driver' => 'pdo_sqlite'), new Configuration());
+        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite'], new Configuration());
 
         $schema = new AclSchema();
 

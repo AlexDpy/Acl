@@ -37,19 +37,18 @@ class DoctrineDbalDatabaseProvider implements DatabaseProviderInterface
     {
         if (false === $mask = $this->connection->fetchColumn(
             'SELECT mask FROM ' . $this->permissionsTable . ' WHERE requester = :requester AND resource = :resource',
-            array(
+            [
                 'requester' => $requester->getAclRequesterIdentifier(),
                 'resource' => $resource->getAclResourceIdentifier(),
-            ),
+            ],
             0,
-            array(
+            [
                 'requester' => \PDO::PARAM_STR,
                 'resource' => \PDO::PARAM_STR,
-            )
+            ]
         )) {
             throw new MaskNotFoundException();
         }
-
 
         return (int) $mask;
     }
@@ -61,14 +60,14 @@ class DoctrineDbalDatabaseProvider implements DatabaseProviderInterface
     {
         $this->connection->delete(
             $this->permissionsTable,
-            array(
+            [
                 'requester' => $permission->getRequester()->getAclRequesterIdentifier(),
                 'resource' => $permission->getResource()->getAclResourceIdentifier(),
-            ),
-            array(
+            ],
+            [
                 'requester' => \PDO::PARAM_STR,
                 'resource' => \PDO::PARAM_STR,
-            )
+            ]
         );
     }
 
@@ -79,16 +78,16 @@ class DoctrineDbalDatabaseProvider implements DatabaseProviderInterface
     {
         $this->connection->update(
             $this->permissionsTable,
-            array('mask' => $permission->getMask()),
-            array(
+            ['mask' => $permission->getMask()],
+            [
                 'requester' => $permission->getRequester()->getAclRequesterIdentifier(),
                 'resource' => $permission->getResource()->getAclResourceIdentifier(),
-            ),
-            array(
+            ],
+            [
                 'mask' => \PDO::PARAM_INT,
                 'requester' => \PDO::PARAM_STR,
                 'resource' => \PDO::PARAM_STR,
-            )
+            ]
         );
     }
 
@@ -99,16 +98,16 @@ class DoctrineDbalDatabaseProvider implements DatabaseProviderInterface
     {
         $this->connection->insert(
             $this->permissionsTable,
-            array(
+            [
                 'requester' => $permission->getRequester()->getAclRequesterIdentifier(),
                 'resource' => $permission->getResource()->getAclResourceIdentifier(),
                 'mask' => $permission->getMask(),
-            ),
-            array(
+            ],
+            [
                 'mask' => \PDO::PARAM_INT,
                 'requester' => \PDO::PARAM_STR,
                 'resource' => \PDO::PARAM_STR,
-            )
+            ]
         );
     }
 }

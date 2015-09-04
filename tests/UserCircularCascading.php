@@ -21,7 +21,7 @@ class UserCircularCascading implements CascadingRequesterInterface
      * @param string   $username
      * @param string[] $parents
      */
-    public function __construct($username, array $parents = array())
+    public function __construct($username, array $parents = [])
     {
         $this->username = $username;
         $this->parents = $parents;
@@ -40,10 +40,10 @@ class UserCircularCascading implements CascadingRequesterInterface
      */
     public function getAclParentsRequester()
     {
-        $parents = array();
+        $parents = [];
 
         foreach ($this->parents as $parent) {
-            $parents[] = new self($parent, array($this->username));
+            $parents[] = new self($parent, [$this->username]);
         }
 
         return $parents;

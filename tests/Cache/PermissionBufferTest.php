@@ -28,7 +28,7 @@ class PermissionBufferTest extends \PHPUnit_Framework_TestCase
         $method = $reflection->getMethod('getCacheId');
         $method->setAccessible(true);
 
-        return $method->invokeArgs($permissionBuffer, array($requester, $resource));
+        return $method->invokeArgs($permissionBuffer, [$requester, $resource]);
     }
 
     protected function tearDown()
@@ -39,20 +39,20 @@ class PermissionBufferTest extends \PHPUnit_Framework_TestCase
 
     public function permissionProvider()
     {
-        return array(
-            array(
+        return [
+            [
                 $requester = new Requester('alice'),
                 $resource = new Resource('foo'),
                 new Permission($requester, $resource, new BasicMaskBuilder(4)),
                 $this->generateCacheId($requester, $resource),
-            ),
-            array(
+            ],
+            [
                 $requester = new Requester('alice'),
                 $resource = new Resource('bar'),
                 new Permission($requester, $resource, new BasicMaskBuilder(4)),
                 $this->generateCacheId($requester, $resource),
-            ),
-        );
+            ],
+        ];
     }
 
     /**

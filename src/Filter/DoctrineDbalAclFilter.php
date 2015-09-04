@@ -10,11 +10,9 @@ class DoctrineDbalAclFilter implements AclFilterInterface
 {
     public function __construct(QueryBuilder $queryBuilder)
     {
-
     }
 
     public function apply(RequesterInterface $requester, ResourceInterface $resource, $action)
     {
-
     }
 }

@@ -60,7 +60,7 @@ class AclTest extends AbstractAclTest
         $expectedPermission = new Permission($this->aliceRequester, $this->fooResource, new BasicMaskBuilder(1));
 
         $this->databaseProvider->insertPermission(
-            Argument::that(function(PermissionInterface $permission) use ($expectedPermission) {
+            Argument::that(function (PermissionInterface $permission) use ($expectedPermission) {
                 $this->assertEquals($expectedPermission, $permission);
                 $result = $permission == $expectedPermission;
                 $expectedPermission->setPersistent(true);
@@ -71,7 +71,7 @@ class AclTest extends AbstractAclTest
             ->shouldBeCalledTimes(1);
 
         $this->permissionBuffer->add(
-            Argument::that(function(PermissionInterface $permission) use ($expectedPermission) {
+            Argument::that(function (PermissionInterface $permission) use ($expectedPermission) {
                 $this->assertEquals($expectedPermission, $permission);
 
                 return $permission == $expectedPermission;
@@ -102,7 +102,7 @@ class AclTest extends AbstractAclTest
             ->shouldBeCalledTimes(2);
 
         $this->databaseProvider->updatePermission(
-            Argument::that(function(PermissionInterface $permission) use ($expectedPermission) {
+            Argument::that(function (PermissionInterface $permission) use ($expectedPermission) {
                 $this->assertEquals($expectedPermission, $permission);
 
                 return $permission == $expectedPermission;
@@ -123,7 +123,7 @@ class AclTest extends AbstractAclTest
             ->shouldBeCalledTimes(1);
 
         $this->databaseProvider->insertPermission(
-            Argument::that(function(PermissionInterface $permission) use ($expectedPermission) {
+            Argument::that(function (PermissionInterface $permission) use ($expectedPermission) {
                 $this->assertEquals($expectedPermission, $permission);
                 $result = $permission == $expectedPermission;
                 $expectedPermission->setPersistent(true);
@@ -134,7 +134,7 @@ class AclTest extends AbstractAclTest
             ->shouldBeCalledTimes(1);
 
         $this->permissionBuffer->add(
-            Argument::that(function(PermissionInterface $permission) use ($expectedPermission) {
+            Argument::that(function (PermissionInterface $permission) use ($expectedPermission) {
                 $this->assertEquals($expectedPermission, $permission);
 
                 return $permission == $expectedPermission;
@@ -158,7 +158,7 @@ class AclTest extends AbstractAclTest
             ->shouldBeCalledTimes(1);
 
         $this->databaseProvider->updatePermission(
-            Argument::that(function(PermissionInterface $permission) use ($expectedPermission) {
+            Argument::that(function (PermissionInterface $permission) use ($expectedPermission) {
                 $this->assertEquals($expectedPermission, $permission);
 
                 return $permission == $expectedPermission;
@@ -167,7 +167,7 @@ class AclTest extends AbstractAclTest
             ->shouldBeCalledTimes(1);
 
         $this->permissionBuffer->add(
-            Argument::that(function(PermissionInterface $permission) use ($expectedPermission) {
+            Argument::that(function (PermissionInterface $permission) use ($expectedPermission) {
                 $this->assertEquals($expectedPermission, $permission);
 
                 return $permission == $expectedPermission;
@@ -190,7 +190,7 @@ class AclTest extends AbstractAclTest
             ->shouldBeCalledTimes(1);
 
         $this->permissionBuffer->add(
-            Argument::that(function(PermissionInterface $permission) use ($expectedPermission) {
+            Argument::that(function (PermissionInterface $permission) use ($expectedPermission) {
                 $this->assertEquals($expectedPermission, $permission);
 
                 return $permission == $expectedPermission;
@@ -198,7 +198,7 @@ class AclTest extends AbstractAclTest
         )
             ->shouldBeCalledTimes(1);
 
-        $this->acl->grant($this->aliceRequester, $this->fooResource, array('edit', 'create'));
+        $this->acl->grant($this->aliceRequester, $this->fooResource, ['edit', 'create']);
     }
 /*
     public function testRevoke()
@@ -424,15 +424,15 @@ class AclTest extends AbstractAclTest
     {
         return (int) $this->connection->fetchColumn(
             'SELECT mask FROM acl_permissions WHERE requester = :requester AND resource = :resource',
-            array(
+            [
                 'requester' => $requester->getAclRequesterIdentifier(),
                 'resource' => $resource->getAclResourceIdentifier(),
-            ),
+            ],
             0,
-            array(
+            [
                 'requester' => \PDO::PARAM_STR,
                 'resource' => \PDO::PARAM_STR,
-            )
+            ]
         );
     }
 
@@ -445,16 +445,16 @@ class AclTest extends AbstractAclTest
     {
         $this->connection->insert(
             'acl_permissions',
-            array(
+            [
                 'requester' => $requester->getAclRequesterIdentifier(),
                 'resource' => $resource->getAclResourceIdentifier(),
                 'mask' => $mask,
-            ),
-            array(
+            ],
+            [
                 'requester' => \PDO::PARAM_STR,
                 'resource' => \PDO::PARAM_STR,
                 'mask' => \PDO::PARAM_INT,
-            )
+            ]
         );
     }
 }
