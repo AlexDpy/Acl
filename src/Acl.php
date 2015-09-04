@@ -4,6 +4,7 @@ namespace AlexDpy\Acl;
 
 use AlexDpy\Acl\Cache\PermissionBufferInterface;
 use AlexDpy\Acl\Database\Provider\DatabaseProviderInterface;
+use AlexDpy\Acl\Exception\InvalidMaskBuilderException;
 use AlexDpy\Acl\Exception\MaskNotFoundException;
 use AlexDpy\Acl\Exception\PermissionNotFoundException;
 use AlexDpy\Acl\Mask\MaskBuilderInterface;
@@ -35,7 +36,7 @@ class Acl implements AclInterface
      * @param PermissionBufferInterface $permissionBuffer
      * @param string                    $maskBuilderClass
      *
-     * @throws \InvalidArgumentException
+     * @throws InvalidMaskBuilderException
      */
     public function __construct(
         DatabaseProviderInterface $databaseProvider,
@@ -43,13 +44,16 @@ class Acl implements AclInterface
         $maskBuilderClass = 'AlexDpy\Acl\Mask\BasicMaskBuilder'
     ) {
         if (!class_exists($maskBuilderClass)) {
-            throw new \InvalidArgumentException(sprintf('Class "%s" does not exist', $maskBuilderClass));
+            throw new InvalidMaskBuilderException(sprintf('Class "%s" does not exist', $maskBuilderClass));
         }
 
         $this->maskBuilderClass = $maskBuilderClass;
 
         if (!$this->getMaskBuilder() instanceof MaskBuilderInterface) {
-            throw new \InvalidArgumentException(sprintf('Class "%s" must implements MaskBuilderInterface', $maskBuilderClass));
+            throw new InvalidMaskBuilderException(sprintf(
+                'Class "%s" must implements MaskBuilderInterface',
+                $maskBuilderClass
+            ));
         }
 
         $this->databaseProvider = $databaseProvider;
@@ -115,6 +119,8 @@ class Acl implements AclInterface
 
             $isGranted = $permission->isGranted($action);
         } catch (PermissionNotFoundException $e) {
+            $this->permissionBuffer->add($this->initPermission($requester, $resource, 0));
+
             $isGranted = false;
         }
 
