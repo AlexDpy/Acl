@@ -12,8 +12,9 @@ use AlexDpy\Acl\Model\RequesterInterface;
 use AlexDpy\Acl\Model\Resource;
 use AlexDpy\Acl\Model\ResourceInterface;
 use Prophecy\Argument;
+use Prophecy\Prophecy\ObjectProphecy;
 
-class AclTest extends AbstractAclTest
+class AclTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @var RequesterInterface
@@ -37,9 +38,29 @@ class AclTest extends AbstractAclTest
      */
     protected $barResource;
 
+    /**
+     * @var ObjectProphecy
+     */
+    protected $databaseProvider;
+
+    /**
+     * @var ObjectProphecy
+     */
+    protected $permissionBuffer;
+
+    /**
+     * @var Acl
+     */
+    protected $acl;
+
     protected function setUp()
     {
-        parent::setUp();
+        $this->databaseProvider = $this->prophesize('AlexDpy\Acl\Database\Provider\DatabaseProviderInterface');
+        $this->permissionBuffer = $this->prophesize('AlexDpy\Acl\Cache\PermissionBufferInterface');
+        $this->acl = new Acl(
+            $this->databaseProvider->reveal(),
+            $this->permissionBuffer->reveal()
+        );
 
         $this->aliceRequester = new Requester('alice');
         $this->bobRequester = new Requester('bob');
@@ -49,9 +70,6 @@ class AclTest extends AbstractAclTest
         $this->barResource = new Resource('bar');
     }
 
-    /**
-     * @covers \AlexDpy\Acl\Acl::__construct
-     */
     public function testConstructInvalidMaskBuilderShouldThrowInvalidMaskBuilderException()
     {
         try {
@@ -75,9 +93,6 @@ class AclTest extends AbstractAclTest
         }
     }
 
-    /**
-     * @covers \AlexDpy\Acl\Acl::grant
-     */
     public function testGrantNotCachedNonexistentPermission()
     {
         $this->permissionBuffer->get(Argument::exact($this->aliceRequester), Argument::exact($this->fooResource))
@@ -116,9 +131,6 @@ class AclTest extends AbstractAclTest
         $this->acl->grant($this->aliceRequester, $this->fooResource, 'view');
     }
 
-    /**
-     * @covers \AlexDpy\Acl\Acl::grant
-     */
     public function testGrantNotCachedExistentPermission()
     {
         $this->permissionBuffer->get(Argument::exact($this->aliceRequester), Argument::exact($this->fooResource))
@@ -153,9 +165,6 @@ class AclTest extends AbstractAclTest
         $this->acl->grant($this->aliceRequester, $this->fooResource, 'edit');
     }
 
-    /**
-     * @covers \AlexDpy\Acl\Acl::grant
-     */
     public function testGrantCachedNonexistentPermission()
     {
         $cachedPermission = new Permission($this->aliceRequester, $this->fooResource, new BasicMaskBuilder(1));
@@ -191,9 +200,6 @@ class AclTest extends AbstractAclTest
         $this->acl->grant($this->aliceRequester, $this->fooResource, 'edit');
     }
 
-    /**
-     * @covers \AlexDpy\Acl\Acl::grant
-     */
     public function testGrantCachedExistentPermission()
     {
         $cachedPermission = new Permission($this->aliceRequester, $this->fooResource, new BasicMaskBuilder(1));
@@ -230,9 +236,6 @@ class AclTest extends AbstractAclTest
         $this->acl->grant($this->aliceRequester, $this->fooResource, 'edit');
     }
 
-    /**
-     * @covers \AlexDpy\Acl\Acl::grant
-     */
     public function testGrantWithArrayParameter()
     {
         $cachedPermission = new Permission($this->aliceRequester, $this->fooResource, new BasicMaskBuilder(1));
@@ -256,9 +259,6 @@ class AclTest extends AbstractAclTest
         $this->acl->grant($this->aliceRequester, $this->fooResource, ['edit', 'create']);
     }
 
-    /**
-     * @covers \AlexDpy\Acl\Acl::revoke
-     */
     public function testRevokeNotCachedNonexistentPermission()
     {
         $this->permissionBuffer->get(Argument::exact($this->aliceRequester), Argument::exact($this->fooResource))
@@ -287,9 +287,6 @@ class AclTest extends AbstractAclTest
         $this->acl->revoke($this->aliceRequester, $this->fooResource, 'view');
     }
 
-    /**
-     * @covers \AlexDpy\Acl\Acl::revoke
-     */
     public function testRevokeNotCachedExistentPermission()
     {
         $this->permissionBuffer->get(Argument::exact($this->aliceRequester), Argument::exact($this->fooResource))
@@ -326,9 +323,6 @@ class AclTest extends AbstractAclTest
         $this->acl->revoke($this->aliceRequester, $this->fooResource, 'view');
     }
 
-    /**
-     * @covers \AlexDpy\Acl\Acl::revoke
-     */
     public function testRevokeCachedNonexistentPermission()
     {
         $cachedPermission = new Permission($this->aliceRequester, $this->fooResource, new BasicMaskBuilder(1));
@@ -355,9 +349,6 @@ class AclTest extends AbstractAclTest
         $this->acl->revoke($this->aliceRequester, $this->fooResource, 'view');
     }
 
-    /**
-     * @covers \AlexDpy\Acl\Acl::revoke
-     */
     public function testRevokeCachedExistentPermission()
     {
         $cachedPermission = new Permission($this->aliceRequester, $this->fooResource, new BasicMaskBuilder(1));
@@ -396,9 +387,6 @@ class AclTest extends AbstractAclTest
         $this->acl->revoke($this->aliceRequester, $this->fooResource, 'view');
     }
 
-    /**
-     * @covers \AlexDpy\Acl\Acl::revoke
-     */
     public function testRevokeButKeepSomeAccess()
     {
         $cachedPermission = new Permission($this->aliceRequester, $this->fooResource, new BasicMaskBuilder(3));
@@ -435,10 +423,6 @@ class AclTest extends AbstractAclTest
         $this->acl->revoke($this->aliceRequester, $this->fooResource, 'edit');
     }
 
-    /**
-     * @covers \AlexDpy\Acl\Acl::isGranted
-     * @covers \AlexDpy\Acl\Acl::processIsGranted
-     */
     public function testIsGrantedNotCachedNonexistentPermission()
     {
         $this->permissionBuffer->get(Argument::exact($this->aliceRequester), Argument::exact($this->fooResource))
@@ -468,10 +452,6 @@ class AclTest extends AbstractAclTest
         $this->assertFalse($this->acl->isGranted($this->aliceRequester, $this->fooResource, 'view'));
     }
 
-    /**
-     * @covers \AlexDpy\Acl\Acl::isGranted
-     * @covers \AlexDpy\Acl\Acl::processIsGranted
-     */
     public function testIsGrantedCachedExistentPermission()
     {
         $expectedPermission = new Permission($this->aliceRequester, $this->fooResource, new BasicMaskBuilder(1));

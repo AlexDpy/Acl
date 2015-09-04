@@ -10,18 +10,32 @@ use AlexDpy\Acl\Model\Requester;
 use AlexDpy\Acl\Model\RequesterInterface;
 use AlexDpy\Acl\Model\Resource;
 use AlexDpy\Acl\Model\ResourceInterface;
+use Prophecy\Prophecy\ObjectProphecy;
 
 class PermissionBufferTest extends \PHPUnit_Framework_TestCase
 {
+    /**
+     * @var ObjectProphecy
+     */
     protected $cache;
+
+    /**
+     * @var PermissionBuffer
+     */
+    protected $permissionBuffer;
 
     public function setup()
     {
         $this->cache = $this->prophesize('Doctrine\Common\Cache\CacheProvider');
-
-        parent::setUp();
+        $this->permissionBuffer = new PermissionBuffer($this->cache->reveal());
     }
 
+    /**
+     * @param RequesterInterface $requester
+     * @param ResourceInterface  $resource
+     *
+     * @return string
+     */
     protected function generateCacheId(RequesterInterface $requester, ResourceInterface $resource)
     {
         $reflection = new \ReflectionClass($permissionBuffer = new PermissionBuffer());
@@ -29,12 +43,6 @@ class PermissionBufferTest extends \PHPUnit_Framework_TestCase
         $method->setAccessible(true);
 
         return $method->invokeArgs($permissionBuffer, [$requester, $resource]);
-    }
-
-    protected function tearDown()
-    {
-        $this->cache = null;
-        parent::tearDown();
     }
 
     public function permissionProvider()
@@ -61,8 +69,8 @@ class PermissionBufferTest extends \PHPUnit_Framework_TestCase
     public function testAdd(Requester $requester, Resource $resource, Permission $permission, $cacheId)
     {
         $this->cache->save($cacheId, $permission)->shouldBeCalled();
-        $permissionBuffer = $this->getPermissionBuffer($this->cache->reveal());
-        $permissionBuffer->add($permission);
+
+        $this->permissionBuffer->add($permission);
     }
 
     /**
@@ -71,8 +79,8 @@ class PermissionBufferTest extends \PHPUnit_Framework_TestCase
     public function testRemove(Requester $requester, Resource $resource, Permission $permission, $cacheId)
     {
         $this->cache->delete($cacheId)->shouldBeCalled();
-        $permissionBuffer = $this->getPermissionBuffer($this->cache->reveal());
-        $permissionBuffer->remove($permission);
+
+        $this->permissionBuffer->remove($permission);
     }
 
     /**
@@ -81,15 +89,7 @@ class PermissionBufferTest extends \PHPUnit_Framework_TestCase
     public function testGet(Requester $requester, Resource $resource, Permission $permission, $cacheId)
     {
         $this->cache->fetch($cacheId)->willReturn($permission)->shouldBeCalled();
-        $permissionBuffer = $this->getPermissionBuffer($this->cache->reveal());
-        $this->assertEquals($permissionBuffer->get($requester, $resource), $permission);
-    }
 
-    /**
-     * @return PermissionBufferInterface
-     */
-    private function getPermissionBuffer($cacheProvider = null)
-    {
-        return new PermissionBuffer($cacheProvider);
+        $this->assertEquals($this->permissionBuffer->get($requester, $resource), $permission);
     }
 }
