@@ -26,6 +26,11 @@ abstract class AbstractDatabaseProviderTest extends \PHPUnit_Framework_TestCase
     private $connection;
 
     /**
+     * @var AclSchema
+     */
+    private $schema;
+
+    /**
      * @var DatabaseProviderInterface
      */
     protected $databaseProvider;
@@ -77,6 +82,7 @@ abstract class AbstractDatabaseProviderTest extends \PHPUnit_Framework_TestCase
         });
 
         $this->connection = $connection;
+        $this->schema = $schema;
         $this->databaseProvider = $this->getDatabaseProvider();
 
         $this->aliceRequester = new Requester('alice');
@@ -90,6 +96,24 @@ abstract class AbstractDatabaseProviderTest extends \PHPUnit_Framework_TestCase
             throw new \Exception('sqlite database must be reset before each test');
         }
     }
+
+    /**
+     * Tears down the fixture, for example, close a network connection.
+     * This method is called after a test is executed.
+     */
+    protected function tearDown()
+    {
+        $this->connection->beginTransaction();
+        try {
+            foreach ($this->schema->toDropSql($this->connection->getDatabasePlatform()) as $query) {
+                $this->connection->exec($query);
+            }
+            $this->connection->commit();
+        } catch (DBALException $e) { // @see TableNotFoundException for doctrine/dbal > 2.5
+            $this->connection->rollBack();
+        }
+    }
+
 
     /**
      * @return DatabaseProviderInterface
