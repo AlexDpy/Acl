@@ -8,7 +8,7 @@ use AlexDpy\Acl\Model\RequesterInterface;
 use AlexDpy\Acl\Model\ResourceInterface;
 use Doctrine\DBAL\Connection;
 
-class DoctrineDbalDatabaseProvider implements DatabaseProviderInterface
+class DoctrineDbalProvider implements DatabaseProviderInterface
 {
     /**
      * @var Connection

@@ -3,7 +3,6 @@
 namespace Tests\AlexDpy\Acl\Cache;
 
 use AlexDpy\Acl\Cache\PermissionBuffer;
-use AlexDpy\Acl\Cache\PermissionBufferInterface;
 use AlexDpy\Acl\Mask\BasicMaskBuilder;
 use AlexDpy\Acl\Model\Permission;
 use AlexDpy\Acl\Model\Requester;
