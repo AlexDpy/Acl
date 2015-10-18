@@ -467,4 +467,38 @@ class AclTest extends \PHPUnit_Framework_TestCase
 
         $this->assertTrue($this->acl->isGranted($this->aliceRequester, $this->fooResource, 'view'));
     }
+
+    public function testFilter()
+    {
+
+    }
+
+    public function testExtractRequesterIdentifiers()
+    {
+//        $roleUser = new Requester('ROLE_USER');
+//
+//        $roleEmployee = new RoleCascading('ROLE_EMPLOYEE', [$roleUser]);
+//        $roleInspector = new RoleCascading('ROLE_INSPECTOR', [$roleUser]);
+//        $roleClient = new RoleCascading('ROLE_CLIENT', [$roleUser]);
+//        $roleAccounting = new RoleCascading('ROLE_ACCOUNTING', [$roleEmployee]);
+//        $roleAccountingManager = new RoleCascading('ROLE_ACCOUNTING_MANAGER', [$roleAccounting]);
+//        $roleSales = new RoleCascading('ROLE_SALES', [$roleEmployee]);
+//        $roleCoordination = new RoleCascading('ROLE_COORDINATION', [$roleEmployee]);
+//        $roleCoordinationManager = new RoleCascading('ROLE_COORDINATION_MANAGER', [$roleCoordination]);
+//        $roleHr = new RoleCascading('ROLE_HR', [$roleEmployee]);
+//        $roleOperation = new RoleCascading('ROLE_OPERATION', [$roleEmployee]);
+//        $roleOperationManager = new RoleCascading('ROLE_OPERATION_MANAGER', [$roleOperation]);
+//        $roleEditor = new RoleCascading('ROLE_EDITOR', [$roleEmployee]);
+//        $roleAdmin = new RoleCascading('ROLE_ADMIN', [
+//            $roleAccountingManager,
+//            $roleSales,
+//            $roleCoordinationManager,
+//            $roleHr,
+//            $roleOperationManager,
+//            $roleEditor,
+//        ]);
+//
+//        $alice = new UserCascading('alice', [$roleAdmin]);
+//        $identifiers = Acl::extractRequesterIdentifiers($alice);
+    }
 }
