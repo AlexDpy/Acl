@@ -14,10 +14,15 @@ abstract class AbstractDatabaseFilterTest extends AbstractDatabaseTest
     {
         parent::setUp();
 
+        try {
+            $this->pdo->prepare('DROP TABLE posts')->execute();
+        } catch (\PDOException $e) {
+        }
+
         $create = <<<SQL
 CREATE TABLE posts (
   id INT NOT NULL,
-  resource VARCHAR(32) NOT NULL,
+  status VARCHAR(32) NOT NULL,
   PRIMARY KEY(id)
 )
 SQL;
@@ -25,14 +30,27 @@ SQL;
         $this->pdo->prepare($create)->execute();
 
         for ($i = 1; $i <= 10; $i++) {
-            $sth = $this->getPdoStatement('INSERT INTO posts (id, status) VALUES (:id, :status)');
-
-            $sth->bindValue(':mask', $i, \PDO::PARAM_INT);
-            $sth->bindValue(':status', 0 === $i % 2 ? 'even' : 'odd', \PDO::PARAM_STR);
+            $status = 0 === $i % 2 ? 'even' : 'odd';
+            $sth = $this->getPdoStatement('INSERT INTO posts (id, status) VALUES ('.$i.', "'.$status.'")');
 
             $sth->execute();
         }
     }
+
+    /**
+     * Tears down the fixture, for example, close a network connection.
+     * This method is called after a test is executed.
+     */
+    protected function tearDown()
+    {
+        parent::tearDown();
+
+        try {
+            $this->pdo->prepare('DROP TABLE posts')->execute();
+        } catch (\PDOException $e) {
+        }
+    }
+
 
     /**
      * @dataProvider dataFilter
@@ -46,8 +64,19 @@ SQL;
             }
         }
 
-        foreach ($this->getFilteredPostsIds($identifiers, $filterMask, $orX) as $result) {
-            $this->assertEquals($expected, $result);
+        try {
+            $results = $this->getFilteredPostsIds($identifiers, $filterMask, $orX);
+
+            foreach ($results as $result) {
+                $this->assertEquals($expected, $result);
+            }
+        } catch (\PDOException $e) {
+            if (!empty($e->errorInfo[1]) && $e->errorInfo[1] === 17) {
+//              SQLSTATE[HY000]: General error: 17 database schema has changed
+                return $this->getFilteredPostsIds($identifiers, $filterMask, $orX);
+            }
+
+            throw $e;
         }
     }
 
