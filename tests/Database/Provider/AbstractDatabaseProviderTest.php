@@ -2,6 +2,8 @@
 
 namespace Tests\AlexDpy\Acl\Database\Provider;
 
+use \PDO;
+use \PDOStatement;
 use AlexDpy\Acl\Database\Provider\DatabaseProviderInterface;
 use AlexDpy\Acl\Exception\MaskNotFoundException;
 use AlexDpy\Acl\Mask\BasicMaskBuilder;
@@ -10,25 +12,15 @@ use AlexDpy\Acl\Model\Requester;
 use AlexDpy\Acl\Model\RequesterInterface;
 use AlexDpy\Acl\Model\Resource;
 use AlexDpy\Acl\Model\ResourceInterface;
-use AlexDpy\Acl\Schema\AclSchema;
-use Doctrine\DBAL\Configuration;
-use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\DBALException;
-use Doctrine\DBAL\DriverManager;
 
 abstract class AbstractDatabaseProviderTest extends \PHPUnit_Framework_TestCase
 {
     const SQLITE_PATH = 'tests/sqlite_acl';
 
     /**
-     * @var Connection
+     * @var PDO
      */
-    private $connection;
-
-    /**
-     * @var AclSchema
-     */
-    private $schema;
+    protected $pdo;
 
     /**
      * @var DatabaseProviderInterface
@@ -59,30 +51,28 @@ abstract class AbstractDatabaseProviderTest extends \PHPUnit_Framework_TestCase
 
     protected function setUp()
     {
-        if (!in_array('sqlite', \PDO::getAvailableDrivers())) {
+        if (!in_array('sqlite', PDO::getAvailableDrivers())) {
             $this->markTestSkipped('This test requires SQLite support in your environment.');
         }
 
-        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'path' => self::SQLITE_PATH], new Configuration());
-        $schema = new AclSchema();
+        $this->pdo = new PDO('sqlite:' . self::SQLITE_PATH, null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 
-        $connection->beginTransaction();
         try {
-            foreach ($schema->toDropSql($connection->getDatabasePlatform()) as $query) {
-                $connection->exec($query);
-            }
-            $connection->commit();
-        } catch (DBALException $e) { // @see TableNotFoundException for doctrine/dbal > 2.5
-            $connection->rollBack();
+            $this->pdo->prepare('DROP TABLE acl_permissions')->execute();
+        } catch (\PDOException $e) {
         }
-        $connection->transactional(function (Connection $connection) use ($schema) {
-            foreach ($schema->toSql($connection->getDatabasePlatform()) as $query) {
-                $connection->exec($query);
-            }
-        });
 
-        $this->connection = $connection;
-        $this->schema = $schema;
+        $create = <<<SQL
+CREATE TABLE acl_permissions (
+  requester VARCHAR(255) NOT NULL,
+  resource VARCHAR(255) NOT NULL,
+  mask INTEGER NOT NULL,
+  PRIMARY KEY(requester, resource)
+)
+SQL;
+
+        $this->pdo->prepare($create)->execute();
+
         $this->databaseProvider = $this->getDatabaseProvider();
 
         $this->aliceRequester = new Requester('alice');
@@ -92,7 +82,7 @@ abstract class AbstractDatabaseProviderTest extends \PHPUnit_Framework_TestCase
         $this->fooResource = new Resource('foo');
         $this->barResource = new Resource('bar');
 
-        if ($this->connection->fetchColumn('SELECT COUNT(*) FROM acl_permissions') > 0) {
+        if ($this->pdo->query('SELECT COUNT(*) FROM acl_permissions')->fetchColumn() > 0) {
             throw new \Exception('sqlite database must be reset before each test');
         }
     }
@@ -103,14 +93,9 @@ abstract class AbstractDatabaseProviderTest extends \PHPUnit_Framework_TestCase
      */
     protected function tearDown()
     {
-        $this->connection->beginTransaction();
         try {
-            foreach ($this->schema->toDropSql($this->connection->getDatabasePlatform()) as $query) {
-                $this->connection->exec($query);
-            }
-            $this->connection->commit();
-        } catch (DBALException $e) { // @see TableNotFoundException for doctrine/dbal > 2.5
-            $this->connection->rollBack();
+            $this->pdo->prepare('DROP TABLE acl_permissions')->execute();
+        } catch (\PDOException $e) {
         }
     }
 
@@ -180,19 +165,15 @@ abstract class AbstractDatabaseProviderTest extends \PHPUnit_Framework_TestCase
      */
     private function insertFixture(RequesterInterface $requester, ResourceInterface $resource, $mask)
     {
-        $this->connection->insert(
-            'acl_permissions',
-            [
-                'requester' => $requester->getAclRequesterIdentifier(),
-                'resource' => $resource->getAclResourceIdentifier(),
-                'mask' => $mask,
-            ],
-            [
-                'requester' => \PDO::PARAM_STR,
-                'resource' => \PDO::PARAM_STR,
-                'mask' => \PDO::PARAM_INT,
-            ]
+        $sth = $this->getPdoStatement(
+            'INSERT INTO acl_permissions (requester, resource, mask) VALUES (:requester, :resource, :mask)'
         );
+
+        $sth->bindValue(':mask', $mask, PDO::PARAM_INT);
+        $sth->bindValue(':requester', $requester->getAclRequesterIdentifier(), PDO::PARAM_STR);
+        $sth->bindValue(':resource', $resource->getAclResourceIdentifier(), PDO::PARAM_STR);
+
+        $sth->execute();
     }
 
     /**
@@ -205,17 +186,16 @@ abstract class AbstractDatabaseProviderTest extends \PHPUnit_Framework_TestCase
      */
     private function findFixture(RequesterInterface $requester, ResourceInterface $resource)
     {
-        $fixtures = $this->connection->fetchAll(
-            'SELECT * FROM acl_permissions WHERE requester = :requester AND resource = :resource',
-            array(
-                'requester' => $requester->getAclRequesterIdentifier(),
-                'resource' => $resource->getAclResourceIdentifier(),
-            ),
-            array(
-                'requester' => \PDO::PARAM_STR,
-                'resource' => \PDO::PARAM_STR,
-            )
+        $sth = $this->getPdoStatement(
+            'SELECT * FROM acl_permissions WHERE requester = :requester AND resource = :resource'
         );
+
+        $sth->execute([
+            ':requester' => $requester->getAclRequesterIdentifier(),
+            ':resource' => $resource->getAclResourceIdentifier(),
+        ]);
+
+        $fixtures = $sth->fetchAll(PDO::FETCH_ASSOC);
 
         if (empty($fixtures)) {
             return null;
@@ -229,5 +209,27 @@ abstract class AbstractDatabaseProviderTest extends \PHPUnit_Framework_TestCase
         $fixture['mask'] = (int) $fixture['mask'];
 
         return $fixture;
+    }
+
+
+    /**
+     * @param string $statement
+     *
+     * @return PDOStatement
+     *
+     * @throws \Exception
+     */
+    private function getPdoStatement($statement)
+    {
+        try {
+
+            if (false === $sth = $this->pdo->prepare($statement)) {
+                throw new \Exception(sprintf('Can not prepare this pdo statement: "%s"', $statement));
+            }
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        return $sth;
     }
 }
