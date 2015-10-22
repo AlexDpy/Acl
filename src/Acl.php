@@ -7,6 +7,7 @@ use AlexDpy\Acl\Database\Provider\DatabaseProviderInterface;
 use AlexDpy\Acl\Exception\InvalidMaskBuilderException;
 use AlexDpy\Acl\Exception\MaskNotFoundException;
 use AlexDpy\Acl\Exception\PermissionNotFoundException;
+use AlexDpy\Acl\Database\Filter\AclFilterInterface;
 use AlexDpy\Acl\Mask\MaskBuilderInterface;
 use AlexDpy\Acl\Model\CascadingRequesterInterface;
 use AlexDpy\Acl\Model\Permission;
@@ -105,6 +106,32 @@ class Acl implements AclInterface
     }
 
     /**
+     * @param AclFilterInterface $aclFilter
+     * @param RequesterInterface $requester
+     * @param string|int         $action
+     * @param string             $fromAlias
+     * @param string             $fromIdentifier
+     * @param string             $resourcePrefix
+     * @param array              $orX
+     *
+     * @return mixed
+     */
+    public function filter(
+        AclFilterInterface $aclFilter,
+        RequesterInterface $requester,
+        $action,
+        $fromAlias,
+        $fromIdentifier,
+        $resourcePrefix,
+        $orX = []
+    ) {
+        $identifiers = self::extractRequesterIdentifiers($requester);
+        $mask = $this->getMaskBuilder()->resolveMask($action);
+
+        return $aclFilter->apply($fromAlias, $fromIdentifier, $resourcePrefix, $identifiers, $mask, $orX);
+    }
+
+    /**
      * @param RequesterInterface $requester
      * @param ResourceInterface  $resource
      * @param string             $action
@@ -140,6 +167,40 @@ class Acl implements AclInterface
         }
 
         return $isGranted;
+    }
+
+    /**
+     * @param RequesterInterface $requester
+     *
+     * @return string[]
+     */
+    public static function extractRequesterIdentifiers(RequesterInterface $requester)
+    {
+        $identifiers = [];
+        self::processExtractRequesterIdentifiers($requester, $identifiers);
+
+        return $identifiers;
+    }
+
+    /**
+     * @param RequesterInterface $requester
+     * @param string[]           $identifiers
+     */
+    protected static function processExtractRequesterIdentifiers(RequesterInterface $requester, &$identifiers)
+    {
+        if (!in_array($requester->getAclRequesterIdentifier(), $identifiers)) {
+            $identifiers[] = $requester->getAclRequesterIdentifier();
+        }
+
+        if ($requester instanceof CascadingRequesterInterface) {
+            foreach ($requester->getAclParentsRequester() as $requesterParent) {
+                if (!in_array($requesterParent->getAclRequesterIdentifier(), $identifiers)) {
+                    $identifiers[] = $requesterParent->getAclRequesterIdentifier();
+
+                    self::processExtractRequesterIdentifiers($requesterParent, $identifiers);
+                }
+            }
+        }
     }
 
     /**

@@ -467,4 +467,60 @@ class AclTest extends \PHPUnit_Framework_TestCase
 
         $this->assertTrue($this->acl->isGranted($this->aliceRequester, $this->fooResource, 'view'));
     }
+
+    /**
+     * @dataProvider identifiersDataProvider
+     */
+    public function testExtractRequesterIdentifiers(RequesterInterface $requester, array $expeceted)
+    {
+        $identifiers = Acl::extractRequesterIdentifiers($requester);
+
+        sort($expeceted);
+        sort($identifiers);
+
+        $this->assertEquals($expeceted, $identifiers);
+    }
+
+    public function identifiersDataProvider()
+    {
+        $roleUser = new Requester('ROLE_USER');
+
+        $roleClient = new RoleCascading('ROLE_CLIENT', [$roleUser]);
+
+        $roleEmployee = new RoleCascading('ROLE_EMPLOYEE', [$roleUser]);
+        $roleFoo = new RoleCascading('ROLE_FOO', [$roleEmployee]);
+        $roleFooManager = new RoleCascading('ROLE_FOO_MANAGER', [$roleFoo]);
+        $roleBar = new RoleCascading('ROLE_BAR', [$roleEmployee]);
+        $roleAdmin = new RoleCascading('ROLE_ADMIN', [
+            $roleFooManager,
+            $roleBar,
+        ]);
+
+        return [
+            [
+                new Requester('alice'),
+                ['alice']
+            ],
+            [
+                new UserCascading('alice', [$roleUser]),
+                ['User-alice', 'ROLE_USER']
+            ],
+            [
+                new UserCascading('alice', [$roleClient]),
+                ['User-alice', 'ROLE_USER', 'ROLE_CLIENT']
+            ],
+            [
+                new UserCascading('alice', [$roleFoo]),
+                ['User-alice', 'ROLE_USER', 'ROLE_EMPLOYEE', 'ROLE_FOO']
+            ],
+            [
+                new UserCascading('alice', [$roleAdmin]),
+                ['User-alice', 'ROLE_USER', 'ROLE_EMPLOYEE', 'ROLE_FOO', 'ROLE_FOO_MANAGER', 'ROLE_BAR', 'ROLE_ADMIN']
+            ],
+            [
+                new UserCascading('alice', [new Requester('User-alice'), new Requester('User-alice')]),
+                ['User-alice']
+            ],
+        ];
+    }
 }
