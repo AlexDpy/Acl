@@ -48,5 +48,4 @@ class CakephpOrmAclFilterTest extends AbstractDatabaseFilterTest
 
         return $postsIds;
     }
-
 }

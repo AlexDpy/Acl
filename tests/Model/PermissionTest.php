@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Model;
+namespace tests\Model;
 
 use AlexDpy\Acl\Model\Permission;
 use AlexDpy\Acl\Model\PermissionInterface;

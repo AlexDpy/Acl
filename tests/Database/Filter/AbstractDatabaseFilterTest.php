@@ -5,7 +5,6 @@ namespace Tests\AlexDpy\Acl\Database\Filter;
 use AlexDpy\Acl\Model\Requester;
 use AlexDpy\Acl\Model\Resource;
 use Doctrine\DBAL\Schema\Schema;
-use Doctrine\DBAL\Types\Type;
 use Tests\AlexDpy\Acl\Database\AbstractDatabaseTest;
 
 abstract class AbstractDatabaseFilterTest extends AbstractDatabaseTest
@@ -31,7 +30,7 @@ SQL;
 
         for ($i = 1; $i <= 10; $i++) {
             $status = 0 === $i % 2 ? 'even' : 'odd';
-            $sth = $this->getPdoStatement('INSERT INTO posts (id, status) VALUES ('.$i.', "'.$status.'")');
+            $sth = $this->getPdoStatement('INSERT INTO posts (id, status) VALUES (' . $i . ', "' . $status . '")');
 
             $sth->execute();
         }
@@ -50,7 +49,6 @@ SQL;
         } catch (\PDOException $e) {
         }
     }
-
 
     /**
      * @dataProvider dataFilter
@@ -72,7 +70,7 @@ SQL;
             }
         } catch (\PDOException $e) {
             if (!empty($e->errorInfo[1]) && $e->errorInfo[1] === 17) {
-//              SQLSTATE[HY000]: General error: 17 database schema has changed
+                //              SQLSTATE[HY000]: General error: 17 database schema has changed
                 return $this->getFilteredPostsIds($identifiers, $filterMask, $orX);
             }
 
@@ -95,37 +93,51 @@ SQL;
             [
                 ['alice'],
                 [
-                    'ROLE_EMPLOYEE' => [1 => 1,]
+                    'ROLE_EMPLOYEE' => [1 => 1],
                 ],
-                1, []
+                1, [],
             ],
             [
-                ['alice', 'ROLE_EMPLOYEE',],
+                ['alice'],
                 [
-                    'ROLE_EMPLOYEE' => [1 => 1,]
+                    'alice' => [1 => 2],
                 ],
-                1, [1]
+                1, [],
             ],
             [
-                ['alice', 'ROLE_EMPLOYEE',],
+                ['alice'],
                 [
-                    'ROLE_EMPLOYEE' => [1 => 1, 2 => 1]
+                    'alice' => [1 => 3],
                 ],
-                1, [1, 2]
+                1, [1],
             ],
             [
-                ['alice', 'ROLE_EMPLOYEE',],
+                ['alice', 'ROLE_EMPLOYEE'],
                 [
-                    'ROLE_CLIENT' => [1 => 1, 2 => 1]
+                    'ROLE_EMPLOYEE' => [1 => 1],
                 ],
-                1, []
+                1, [1],
             ],
             [
-                ['alice', 'ROLE_EMPLOYEE',],
+                ['alice', 'ROLE_EMPLOYEE'],
                 [
-                    'ROLE_EMPLOYEE' => [1 => 1, 2 => 1]
+                    'ROLE_EMPLOYEE' => [1 => 1, 2 => 1],
                 ],
-                1, [1, 2, 3, 5, 7, 9], ['p.status = \'odd\'']
+                1, [1, 2],
+            ],
+            [
+                ['alice', 'ROLE_EMPLOYEE'],
+                [
+                    'ROLE_CLIENT' => [1 => 1, 2 => 1],
+                ],
+                1, [],
+            ],
+            [
+                ['alice', 'ROLE_EMPLOYEE'],
+                [
+                    'ROLE_EMPLOYEE' => [1 => 1, 2 => 1],
+                ],
+                1, [1, 2, 3, 5, 7, 9], ['p.status = \'odd\''],
             ],
         ];
     }

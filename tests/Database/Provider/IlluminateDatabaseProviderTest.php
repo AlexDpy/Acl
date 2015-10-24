@@ -12,8 +12,8 @@ class IlluminateDatabaseProviderTest extends AbstractDatabaseProviderTest
         $capsule = new Manager();
 
         $capsule->addConnection([
-            'driver'    => 'sqlite',
-            'database'  => self::SQLITE_PATH,
+            'driver' => 'sqlite',
+            'database' => self::SQLITE_PATH,
         ]);
 
         return new IlluminateDatabaseProvider($capsule->getConnection('default'));

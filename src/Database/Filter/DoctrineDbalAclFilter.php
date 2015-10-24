@@ -4,18 +4,9 @@ namespace AlexDpy\Acl\Database\Filter;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
-use Doctrine\ORM\Query;
 
 class DoctrineDbalAclFilter implements AclFilterInterface
 {
-    const MODE_DBAL_QUERY_BUILDER = 1;
-    const MODE_ORM_QUERY = 2;
-
-    /**
-     * @var int
-     */
-    private $mode;
-
     /**
      * @var Connection
      */
@@ -27,55 +18,18 @@ class DoctrineDbalAclFilter implements AclFilterInterface
     protected $queryBuilder;
 
     /**
-     * @var Query
+     * @param QueryBuilder $queryBuilder
      */
-    protected $query;
-
-    /**
-     * @param QueryBuilder|Query $queryBuilder
-     */
-    public function __construct($queryBuilder)
+    public function __construct(QueryBuilder $queryBuilder)
     {
-        if ($queryBuilder instanceof QueryBuilder) {
-            $this->mode = self::MODE_DBAL_QUERY_BUILDER;
-            $this->connection = $queryBuilder->getConnection();
-            $this->queryBuilder = $queryBuilder;
-        } elseif ($queryBuilder instanceof Query) {
-            $this->mode = self::MODE_ORM_QUERY;
-            $this->connection = $queryBuilder->getEntityManager()->getConnection();
-            $this->query = $queryBuilder;
-        } else {
-            throw new \InvalidArgumentException(sprintf('$queryBuilder must be an instance of %s'));
-        }
+        $this->connection = $queryBuilder->getConnection();
+        $this->queryBuilder = $queryBuilder;
     }
 
     /**
      * {@inheritdoc}
      */
     public function apply($fromAlias, $fromIdentifier, $resourcePrefix, array $requesterIdentifiers, $mask, array $orX = [])
-    {
-        if (self::MODE_DBAL_QUERY_BUILDER === $this->mode) {
-            return $this->applyDbalQueryBuilderMode($fromAlias, $fromIdentifier, $resourcePrefix, $requesterIdentifiers, $mask, $orX);
-        }
-
-        if (self::MODE_ORM_QUERY === $this->mode) {
-            return $this->applyOrmQueryMode($fromAlias, $fromIdentifier, $resourcePrefix, $requesterIdentifiers, $mask, $orX);
-        }
-
-        throw new \Exception('Can not apply any filter');
-    }
-
-    /**
-     * @param string $fromAlias
-     * @param string $fromIdentifier
-     * @param string $resourcePrefix
-     * @param array  $requesterIdentifiers
-     * @param int    $mask
-     * @param array  $orX
-     *
-     * @return QueryBuilder
-     */
-    private function applyDbalQueryBuilderMode($fromAlias, $fromIdentifier, $resourcePrefix, array $requesterIdentifiers, $mask, array $orX = [])
     {
         $this->queryBuilder
             ->leftJoin(
@@ -95,30 +49,6 @@ class DoctrineDbalAclFilter implements AclFilterInterface
             ->setParameter('acl_identifiers', $requesterIdentifiers, Connection::PARAM_STR_ARRAY)
             ->setParameter('acl_mask', $mask, \PDO::PARAM_INT);
 
-
         return $this->queryBuilder;
-    }
-
-    /**
-     * @param string $fromAlias
-     * @param string $fromIdentifier
-     * @param string $resourcePrefix
-     * @param array  $requesterIdentifiers
-     * @param int    $mask
-     * @param array  $orX
-     *
-     * @return QueryBuilder
-     */
-    private function applyOrmQueryMode($fromAlias, $fromIdentifier, $resourcePrefix, array $requesterIdentifiers, $mask, array $orX = [])
-    {
-        $this->query->setHint(Query::HINT_CUSTOM_OUTPUT_WALKER, 'AlexDpy\Acl\Database\Filter\DoctrineOrmAclWalker');
-        $this->query->setHint('acl_from_alias', $fromAlias);
-        $this->query->setHint('acl_from_identifier', $fromIdentifier);
-        $this->query->setHint('acl_resource_prefix', $resourcePrefix);
-        $this->query->setHint('acl_requester_identifiers', $requesterIdentifiers);
-        $this->query->setHint('acl_mask', $mask);
-        $this->query->setHint('acl_or_x', $orX);
-
-        return $this->query;
     }
 }

@@ -9,7 +9,6 @@ use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Tools\Setup;
-use Tests\AlexDpy\Acl\Post;
 
 class DoctrineDbalAclFilterTest extends AbstractDatabaseFilterTest
 {
@@ -36,7 +35,6 @@ class DoctrineDbalAclFilterTest extends AbstractDatabaseFilterTest
         $this->entityManager = EntityManager::create($this->connection, $config);
     }
 
-
     protected function getFilteredPostsIds(array $identifiers, $mask, array $orX = [])
     {
         $qb = new QueryBuilder($this->connection);
@@ -45,21 +43,57 @@ class DoctrineDbalAclFilterTest extends AbstractDatabaseFilterTest
         $aclFilter = new DoctrineDbalAclFilter($qb);
         $aclFilter->apply('p', 'id', 'post-', $identifiers, $mask, $orX);
 
-        $dbalResult = array_map(function ($post) {
+        $result = array_map(function ($post) {
             return (int) $post['id'];
         }, $qb->execute()->fetchAll());
 
-        $qb = new \Doctrine\ORM\QueryBuilder($this->entityManager);
-        $query = $qb->select('p')->from('Tests\AlexDpy\Acl\Post', 'p')->getQuery();
-
-        $aclFilter = new DoctrineDbalAclFilter($query);
-        $aclFilter->apply('p', 'id', 'post-', $identifiers, $mask, $orX);
-
-        $ormResult = array_map(function (Post $post) {
-            return (int) $post->getId();
-        }, $query->getResult());
-
-        return [$dbalResult, $ormResult];
+        return [$result];
     }
 
+    public function testQueryBuilderShouldHaveNewParameters()
+    {
+        $qb = new QueryBuilder($this->connection);
+        $qb->select('p.id')->from('posts', 'p');
+
+        $aclFilter = new DoctrineDbalAclFilter($qb);
+        $aclFilter->apply('p', 'id', 'post-', ['user-1'], 1, []);
+
+        $this->assertEquals([
+            'acl_prefix' => 'post-',
+            'acl_identifiers' => ['user-1'],
+            'acl_mask' => 1,
+        ], $qb->getParameters());
+    }
+
+    public function testFilterShouldNotOverrideQueryBuilderParameters()
+    {
+        $qb = new QueryBuilder($this->connection);
+        $qb->select('p.id')->from('posts', 'p')->where('p.status = :status')->setParameter('status', 'odd');
+
+        $aclFilter = new DoctrineDbalAclFilter($qb);
+        $aclFilter->apply('p', 'id', 'post-', ['user-1'], 1);
+
+        $this->assertEquals([
+            'status' => 'odd',
+            'acl_prefix' => 'post-',
+            'acl_identifiers' => ['user-1'],
+            'acl_mask' => 1,
+        ], $qb->getParameters());
+    }
+
+    public function testItShouldWorksWithParametersInTheOrX()
+    {
+        $qb = new QueryBuilder($this->connection);
+        $qb->select('p.id')->from('posts', 'p')->setParameter('status', 'odd');
+
+        $aclFilter = new DoctrineDbalAclFilter($qb);
+        $aclFilter->apply('p', 'id', 'post-', ['user-1'], 1, ['status = :status']);
+
+        $this->assertEquals([
+            'status' => 'odd',
+            'acl_prefix' => 'post-',
+            'acl_identifiers' => ['user-1'],
+            'acl_mask' => 1,
+        ], $qb->getParameters());
+    }
 }

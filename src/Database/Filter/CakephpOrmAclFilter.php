@@ -2,7 +2,6 @@
 
 namespace AlexDpy\Acl\Database\Filter;
 
-
 use Cake\ORM\Query;
 
 class CakephpOrmAclFilter implements AclFilterInterface
@@ -32,13 +31,12 @@ class CakephpOrmAclFilter implements AclFilterInterface
             'conditions' => $this->query->newExpr()->eq('acl_p.resource', $this->query->func()->concat([
                 ':acl_resource_prefix' => 'literal',
                 $fromAlias . '.' . $fromIdentifier => 'literal',
-            ]))
+            ])),
         ]);
-
 
         $orX[] = $this->query->newExpr()->and_([
             $this->query->newExpr()->in('acl_p.requester', $requesterIdentifiers, 'string'),
-            $this->query->newExpr(':acl_mask = (acl_p.mask & :acl_mask)')
+            $this->query->newExpr(':acl_mask = (acl_p.mask & :acl_mask)'),
         ]);
 
         $this->query->andWhere($this->query->newExpr()->or_($orX));

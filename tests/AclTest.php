@@ -499,27 +499,27 @@ class AclTest extends \PHPUnit_Framework_TestCase
         return [
             [
                 new Requester('alice'),
-                ['alice']
+                ['alice'],
             ],
             [
                 new UserCascading('alice', [$roleUser]),
-                ['User-alice', 'ROLE_USER']
+                ['User-alice', 'ROLE_USER'],
             ],
             [
                 new UserCascading('alice', [$roleClient]),
-                ['User-alice', 'ROLE_USER', 'ROLE_CLIENT']
+                ['User-alice', 'ROLE_USER', 'ROLE_CLIENT'],
             ],
             [
                 new UserCascading('alice', [$roleFoo]),
-                ['User-alice', 'ROLE_USER', 'ROLE_EMPLOYEE', 'ROLE_FOO']
+                ['User-alice', 'ROLE_USER', 'ROLE_EMPLOYEE', 'ROLE_FOO'],
             ],
             [
                 new UserCascading('alice', [$roleAdmin]),
-                ['User-alice', 'ROLE_USER', 'ROLE_EMPLOYEE', 'ROLE_FOO', 'ROLE_FOO_MANAGER', 'ROLE_BAR', 'ROLE_ADMIN']
+                ['User-alice', 'ROLE_USER', 'ROLE_EMPLOYEE', 'ROLE_FOO', 'ROLE_FOO_MANAGER', 'ROLE_BAR', 'ROLE_ADMIN'],
             ],
             [
                 new UserCascading('alice', [new Requester('User-alice'), new Requester('User-alice')]),
-                ['User-alice']
+                ['User-alice'],
             ],
         ];
     }

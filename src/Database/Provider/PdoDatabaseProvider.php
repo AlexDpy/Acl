@@ -2,8 +2,8 @@
 
 namespace AlexDpy\Acl\Database\Provider;
 
-use \PDO;
-use \PDOStatement;
+use PDO;
+use PDOStatement;
 use AlexDpy\Acl\Exception\MaskNotFoundException;
 use AlexDpy\Acl\Model\PermissionInterface;
 use AlexDpy\Acl\Model\RequesterInterface;
@@ -109,7 +109,6 @@ class PdoDatabaseProvider implements DatabaseProviderInterface
     private function getPdoStatement($statement)
     {
         try {
-
             if (false === $sth = $this->pdo->prepare($statement)) {
                 throw new \Exception(sprintf('Can not prepare this pdo statement: "%s"', $statement));
             }

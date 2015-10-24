@@ -2,8 +2,8 @@
 
 namespace Tests\AlexDpy\Acl\Database;
 
-use \PDO;
-use \PDOStatement;
+use PDO;
+use PDOStatement;
 use AlexDpy\Acl\Model\Requester;
 use AlexDpy\Acl\Model\RequesterInterface;
 use AlexDpy\Acl\Model\Resource;
@@ -128,7 +128,7 @@ SQL;
         $fixtures = $sth->fetchAll(PDO::FETCH_ASSOC);
 
         if (empty($fixtures)) {
-            return null;
+            return;
         }
 
         if (count($fixtures) > 1) {
@@ -141,7 +141,6 @@ SQL;
         return $fixture;
     }
 
-
     /**
      * @param string $statement
      *
@@ -152,7 +151,6 @@ SQL;
     protected function getPdoStatement($statement)
     {
         try {
-
             if (false === $sth = $this->pdo->prepare($statement)) {
                 throw new \Exception(sprintf('Can not prepare this pdo statement: "%s"', $statement));
             }

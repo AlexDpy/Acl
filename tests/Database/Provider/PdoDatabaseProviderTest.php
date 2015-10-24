@@ -2,7 +2,7 @@
 
 namespace Tests\AlexDpy\Acl\Database\Provider;
 
-use \PDO;
+use PDO;
 use AlexDpy\Acl\Database\Provider\PdoDatabaseProvider;
 
 class PdoDatabaseProviderTest extends AbstractDatabaseProviderTest
