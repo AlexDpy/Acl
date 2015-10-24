@@ -83,22 +83,18 @@ class DoctrineDbalAclFilter implements AclFilterInterface
                 'acl_permissions',
                 'acl_p',
                 'acl_p.resource = ' . $this->connection->getDatabasePlatform()->getConcatExpression(
-                    ':prefix', $fromAlias . '.' . $fromIdentifier
+                    ':acl_prefix', $fromAlias . '.' . $fromIdentifier
                 )
             );
 
-        $orX[] = 'acl_p.requester IN (:identifiers) AND :mask = (acl_p.mask & :mask)';
+        $orX[] = 'acl_p.requester IN (:acl_identifiers) AND :acl_mask = (acl_p.mask & :acl_mask)';
         $this->queryBuilder->andWhere(implode(' OR ', $orX));
 
-        $this->queryBuilder->setParameters([
-            'prefix' => $resourcePrefix,
-            'identifiers' => $requesterIdentifiers,
-            'mask' => $mask,
-        ], [
-            'prefix' => \PDO::PARAM_STR,
-            'identifiers' => Connection::PARAM_STR_ARRAY,
-            'mask' => \PDO::PARAM_INT,
-        ]);
+        $this->queryBuilder
+            ->setParameter('acl_prefix', $resourcePrefix, \PDO::PARAM_STR)
+            ->setParameter('acl_identifiers', $requesterIdentifiers, Connection::PARAM_STR_ARRAY)
+            ->setParameter('acl_mask', $mask, \PDO::PARAM_INT);
+
 
         return $this->queryBuilder;
     }
