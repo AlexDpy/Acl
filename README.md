@@ -15,9 +15,9 @@ $ composer require alexdpy/acl
 ## Update your database schema
 
 You have to create the `acl_permissions` table.  
-You can generate the query output by using the `bin/acl` command in your terminal.
+You can generate the query output by using the `vendor/bin/acl` command in your terminal.
 ```sh
-$ bin/acl schema:get-create-query 
+$ vendor/bin/acl schema:get-create-query 
 ```
 Custom options are:
 - the permissions table name
