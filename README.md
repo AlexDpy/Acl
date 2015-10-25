@@ -1,4 +1,4 @@
-# ACL
+# ACL [![Build Status](https://secure.travis-ci.org/AlexDpy/Acl.png?branch=master)](http://travis-ci.org/AlexDpy/Acl)
 
 > The easiest way to dynamic Access Control List
 
