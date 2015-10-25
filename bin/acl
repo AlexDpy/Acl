@@ -1,0 +1,31 @@
+#!/usr/bin/env php
+<?php
+
+$files = [
+    __DIR__ . '/../vendor/autoload.php',
+    __DIR__ . '/../../../autoload.php'
+];
+$loader = null;
+
+foreach ($files as $file) {
+    if (file_exists($file)) {
+        $loader = require $file;
+
+        break;
+    }
+}
+
+if (null === $loader) {
+    throw new RuntimeException('vendor/autoload.php could not be found. Did you run `composer install` ?');
+}
+
+if (!class_exists('Symfony\Component\Console\Application')) {
+    throw new RuntimeException('The symfony/console component is missing. Did you run `composer require symfony/console` ?');
+}
+
+use AlexDpy\Acl\Command\AclSchemaGetCreateQueryCommand;
+use Symfony\Component\Console\Application;
+
+$app = new Application('acl');
+$app->add(new AclSchemaGetCreateQueryCommand());
+$app->run();

@@ -19,7 +19,8 @@
         "cakephp/orm": "~3.0",
         "doctrine/dbal": "~2.4",
         "doctrine/orm": "~2.4",
-        "illuminate/database": ">=4.2"
+        "illuminate/database": ">=4.2",
+        "symfony/console": "~2.3"
     },
     "autoload": {
         "psr-4": {
@@ -30,5 +31,6 @@
         "psr-4": {
             "Tests\\AlexDpy\\Acl\\": "tests/"
         }
-    }
+    },
+    "bin": ["bin/acl"]
 }
