@@ -241,3 +241,8 @@ $acl = new Acl($databaseProvider, $permissionBuffer);
 ### Filtering lists
 
 @TODO
+
+
+## LICENSE
+
+[MIT](./LICENSE)
