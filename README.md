@@ -59,8 +59,8 @@ $post has to be an instance of `AlexDpy\Acl\Model\ResourceInterface`
 ```php
 <?php
 
-if (!$acl->isGranted($acl->isGranted($user, $post, 'EDIT'))) {
-    throw new \Exception('You can not access to this post !');
+if (!$acl->isGranted($user, $post, 'EDIT')) {
+    throw new \Exception('You can not edit this post !');
 }
 ```
 
