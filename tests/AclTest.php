@@ -3,6 +3,7 @@
 namespace Tests\AlexDpy\Acl;
 
 use AlexDpy\Acl\Acl;
+use AlexDpy\Acl\Database\Schema\AclSchema;
 use AlexDpy\Acl\Exception\InvalidMaskBuilderException;
 use AlexDpy\Acl\Mask\BasicMaskBuilder;
 use AlexDpy\Acl\Model\Permission;
@@ -91,6 +92,19 @@ class AclTest extends \PHPUnit_Framework_TestCase
             $this->fail('Acl::__construct should throw an InvalidMaskBuilderException when MaskBuilder class does not implement MaskBuilderInterface');
         } catch (InvalidMaskBuilderException $e) {
         }
+    }
+
+    public function testConstructShouldCreateSchemaIfNull()
+    {
+        $this->assertEquals(
+            new AclSchema(),
+            $this->getAclSchema($this->acl)
+        );
+    }
+
+    public function testConstructShouldSetAclSchemaOnDatabaseProvider()
+    {
+        $this->databaseProvider->setAclSchema($this->getAclSchema($this->acl))->shouldBeCalled();
     }
 
     public function testGrantNotCachedNonexistentPermission()
@@ -468,6 +482,28 @@ class AclTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($this->acl->isGranted($this->aliceRequester, $this->fooResource, 'view'));
     }
 
+    public function testFilterShouldSetAclSchemaOnAclFilter()
+    {
+        $aclFilter = $this->prophesize('AlexDpy\Acl\Database\Filter\AclFilterInterface');
+        $revealedAclFilter = $aclFilter->reveal();
+
+        $aclFilter->setAclSchema($this->getAclSchema($this->acl))->shouldBeCalled();
+        $aclFilter->apply(Argument::cetera())->shouldBeCalled();
+
+        $this->acl->filter($revealedAclFilter, $this->aliceRequester, 'VIEW', 'p', 'id', 'post-');
+    }
+
+    public function testFilterShouldApplyGoodArguments()
+    {
+        $aclFilter = $this->prophesize('AlexDpy\Acl\Database\Filter\AclFilterInterface');
+        $revealedAclFilter = $aclFilter->reveal();
+
+        $aclFilter->setAclSchema(Argument::any())->shouldBeCalled();
+        $aclFilter->apply('p', 'id', 'post-', ['alice'], 1, ['p.status = \'odd\''])->shouldBeCalled();
+
+        $this->acl->filter($revealedAclFilter, $this->aliceRequester, 'VIEW', 'p', 'id', 'post-', ['p.status = \'odd\'']);
+    }
+
     /**
      * @dataProvider identifiersDataProvider
      */
@@ -522,5 +558,18 @@ class AclTest extends \PHPUnit_Framework_TestCase
                 ['User-alice'],
             ],
         ];
+    }
+
+    /**
+     * @param Acl $acl
+     *
+     * @return AclSchema|null
+     */
+    private function getAclSchema(Acl $acl)
+    {
+        $reflectionProperty = new \ReflectionProperty(get_class($acl), 'aclSchema');
+        $reflectionProperty->setAccessible(true);
+
+        return $reflectionProperty->getValue($acl);
     }
 }
