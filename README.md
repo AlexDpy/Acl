@@ -12,9 +12,17 @@ $ composer require alexdpy/acl
 ```
 
 
-## Update the database schema
+## Update your database schema
 
-@TODO
+You have to create the `acl_permissions` table.  
+You can generate the query output by using the `bin/acl` command in your terminal.
+```sh
+$ bin/acl schema:get-create-query 
+```
+Custom options are:
+- the permissions table name
+- the requester column length
+- the resource column length
 
 
 ## Usage
@@ -44,6 +52,29 @@ use AlexDpy\Acl\Acl;
 
 $acl = new Acl($databaseProvider, new PermissionBuffer());
 ```
+
+$acl uses an `AclSchema` to know what the database schema looks like.  
+You can customize the schema options if you have to.
+```php
+<?php
+
+use AlexDpy\Acl\Acl;
+use AlexDpy\Acl\Database\Schema\AclSchema;
+
+$aclSchema = new AclSchema([
+    'permissions_table_name' => 'acl_perm',
+    'requester_column_length' => 100,
+    'resource_column_length' => 100,
+]);
+
+$acl = new Acl(
+    $databaseProvider,
+    new PermissionBuffer(),
+    'AlexDpy\Acl\Mask\BasicMaskBuilder',
+    $aclSchema
+);
+```
+You can also extends the `AclSchema` and use your own.
 
 
 ### isGranted, grant, revoke

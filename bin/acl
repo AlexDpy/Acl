@@ -23,9 +23,9 @@ if (!class_exists('Symfony\Component\Console\Application')) {
     throw new RuntimeException('The symfony/console component is missing. Did you run `composer require symfony/console` ?');
 }
 
-use AlexDpy\Acl\Command\AclSchemaGetCreateQueryCommand;
+use AlexDpy\Acl\Command\SchemaGetCreateQueryCommand;
 use Symfony\Component\Console\Application;
 
 $app = new Application('acl');
-$app->add(new AclSchemaGetCreateQueryCommand());
+$app->add(new SchemaGetCreateQueryCommand());
 $app->run();

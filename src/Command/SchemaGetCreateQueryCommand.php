@@ -11,14 +11,14 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ChoiceQuestion;
 
-class AclSchemaGetCreateQueryCommand extends Command
+class SchemaGetCreateQueryCommand extends Command
 {
     /**
      * {@inheritdoc}
      */
     protected function configure()
     {
-        $this->setName('acl:schema:get-create-query');
+        $this->setName('schema:get-create-query');
 
         $this->addArgument('driver', InputArgument::OPTIONAL, 'The database driver to use');
 
