@@ -4,7 +4,7 @@ namespace AlexDpy\Acl\Database\Filter;
 
 use Doctrine\ORM\Query;
 
-class DoctrineOrmAclFilter implements AclFilterInterface
+class DoctrineOrmAclFilter extends AbstractAclFilter
 {
     /**
      * @var Query
@@ -26,6 +26,7 @@ class DoctrineOrmAclFilter implements AclFilterInterface
     {
         $this->query->setHint(Query::HINT_CUSTOM_OUTPUT_WALKER, 'AlexDpy\Acl\Database\Filter\DoctrineOrmAclWalker');
 
+        $this->query->setHint('acl_permissions_table_name', $this->getAclSchema()->getPermissionsTableName());
         $this->query->setHint('acl_resource_prefix', $resourcePrefix);
         $this->query->setHint('acl_requester_identifiers', $requesterIdentifiers);
         $this->query->setHint('acl_mask', $mask);

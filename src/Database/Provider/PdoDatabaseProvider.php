@@ -2,14 +2,14 @@
 
 namespace AlexDpy\Acl\Database\Provider;
 
-use PDO;
-use PDOStatement;
 use AlexDpy\Acl\Exception\MaskNotFoundException;
 use AlexDpy\Acl\Model\PermissionInterface;
 use AlexDpy\Acl\Model\RequesterInterface;
 use AlexDpy\Acl\Model\ResourceInterface;
+use PDO;
+use PDOStatement;
 
-class PdoDatabaseProvider implements DatabaseProviderInterface
+class PdoDatabaseProvider extends AbstractDatabaseProvider
 {
     /**
      * @var PDO
@@ -17,18 +17,11 @@ class PdoDatabaseProvider implements DatabaseProviderInterface
     protected $pdo;
 
     /**
-     * @var string
+     * @param PDO $pdo
      */
-    protected $permissionsTable;
-
-    /**
-     * @param PDO    $pdo
-     * @param string $permissionsTable
-     */
-    public function __construct(PDO $pdo, $permissionsTable = 'acl_permissions')
+    public function __construct(PDO $pdo)
     {
         $this->pdo = $pdo;
-        $this->permissionsTable = $permissionsTable;
     }
 
     /**
@@ -37,7 +30,7 @@ class PdoDatabaseProvider implements DatabaseProviderInterface
     public function findMask(RequesterInterface $requester, ResourceInterface $resource)
     {
         $sth = $this->getPdoStatement(
-            'SELECT mask FROM ' . $this->permissionsTable . ' WHERE requester = :requester AND resource = :resource'
+            'SELECT mask FROM ' . $this->getAclSchema()->getPermissionsTableName() . ' WHERE requester = :requester AND resource = :resource'
         );
 
         $sth->execute([
@@ -58,7 +51,7 @@ class PdoDatabaseProvider implements DatabaseProviderInterface
     public function deletePermission(PermissionInterface $permission)
     {
         $sth = $this->getPdoStatement(
-            'DELETE FROM ' . $this->permissionsTable . ' WHERE requester = :requester AND resource = :resource'
+            'DELETE FROM ' . $this->getAclSchema()->getPermissionsTableName() . ' WHERE requester = :requester AND resource = :resource'
         );
 
         $sth->bindValue(':requester', $permission->getRequester()->getAclRequesterIdentifier(), PDO::PARAM_STR);
@@ -73,7 +66,7 @@ class PdoDatabaseProvider implements DatabaseProviderInterface
     public function updatePermission(PermissionInterface $permission)
     {
         $sth = $this->getPdoStatement(
-            'UPDATE ' . $this->permissionsTable . ' SET mask = :mask WHERE requester = :requester AND resource = :resource'
+            'UPDATE ' . $this->getAclSchema()->getPermissionsTableName() . ' SET mask = :mask WHERE requester = :requester AND resource = :resource'
         );
 
         $sth->bindValue(':mask', $permission->getMask(), PDO::PARAM_INT);
@@ -89,7 +82,7 @@ class PdoDatabaseProvider implements DatabaseProviderInterface
     public function insertPermission(PermissionInterface $permission)
     {
         $sth = $this->getPdoStatement(
-            'INSERT INTO ' . $this->permissionsTable . ' (requester, resource, mask) VALUES (:requester, :resource, :mask)'
+            'INSERT INTO ' . $this->getAclSchema()->getPermissionsTableName() . ' (requester, resource, mask) VALUES (:requester, :resource, :mask)'
         );
 
         $sth->bindValue(':mask', $permission->getMask(), PDO::PARAM_INT);

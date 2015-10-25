@@ -41,6 +41,7 @@ class DoctrineDbalAclFilterTest extends AbstractDatabaseFilterTest
         $qb->select('p.id')->from('posts', 'p');
 
         $aclFilter = new DoctrineDbalAclFilter($qb);
+        $aclFilter->setAclSchema($this->aclSchema);
         $aclFilter->apply('p', 'id', 'post-', $identifiers, $mask, $orX);
 
         $result = array_map(function ($post) {
@@ -56,6 +57,7 @@ class DoctrineDbalAclFilterTest extends AbstractDatabaseFilterTest
         $qb->select('p.id')->from('posts', 'p');
 
         $aclFilter = new DoctrineDbalAclFilter($qb);
+        $aclFilter->setAclSchema($this->aclSchema);
         $aclFilter->apply('p', 'id', 'post-', ['user-1'], 1, []);
 
         $this->assertEquals([
@@ -71,6 +73,7 @@ class DoctrineDbalAclFilterTest extends AbstractDatabaseFilterTest
         $qb->select('p.id')->from('posts', 'p')->where('p.status = :status')->setParameter('status', 'odd');
 
         $aclFilter = new DoctrineDbalAclFilter($qb);
+        $aclFilter->setAclSchema($this->aclSchema);
         $aclFilter->apply('p', 'id', 'post-', ['user-1'], 1);
 
         $this->assertEquals([
@@ -87,6 +90,7 @@ class DoctrineDbalAclFilterTest extends AbstractDatabaseFilterTest
         $qb->select('p.id')->from('posts', 'p')->setParameter('status', 'odd');
 
         $aclFilter = new DoctrineDbalAclFilter($qb);
+        $aclFilter->setAclSchema($this->aclSchema);
         $aclFilter->apply('p', 'id', 'post-', ['user-1'], 1, ['status = :status']);
 
         $this->assertEquals([

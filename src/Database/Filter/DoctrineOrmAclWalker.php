@@ -18,12 +18,13 @@ class DoctrineOrmAclWalker extends SqlWalker
         $prefix = $this->getQuery()->getHint('acl_resource_prefix');
         $fromAlias = $this->getQuery()->getHint('acl_from_alias');
         $fromIdentifier = $this->getQuery()->getHint('acl_from_identifier');
+        $permissionsTableName = $this->getQuery()->getHint('acl_permissions_table_name');
 
         $resourceCondition = $this->getConnection()->getDatabasePlatform()->getConcatExpression(
             $this->getConnection()->quote($prefix), $this->dqlToSqlReference($fromAlias, $fromIdentifier)
         );
 
-        $sql .= ' LEFT JOIN acl_permissions acl_p ON acl_p.resource = ' . $resourceCondition;
+        $sql .= ' LEFT JOIN ' . $permissionsTableName . ' acl_p ON acl_p.resource = ' . $resourceCondition;
 
         return $sql;
     }

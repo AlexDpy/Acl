@@ -2,12 +2,13 @@
 
 namespace AlexDpy\Acl\Database\Provider;
 
+use AlexDpy\Acl\Database\Schema\HasAclSchemaInterface;
 use AlexDpy\Acl\Exception\MaskNotFoundException;
 use AlexDpy\Acl\Model\PermissionInterface;
 use AlexDpy\Acl\Model\RequesterInterface;
 use AlexDpy\Acl\Model\ResourceInterface;
 
-interface DatabaseProviderInterface
+interface DatabaseProviderInterface extends HasAclSchemaInterface
 {
     /**
      * @param RequesterInterface $requester

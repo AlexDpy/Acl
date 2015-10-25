@@ -3,6 +3,7 @@
 namespace Tests\AlexDpy\Acl\Database\Provider;
 
 use AlexDpy\Acl\Database\Provider\DatabaseProviderInterface;
+use AlexDpy\Acl\Database\Schema\AclSchema;
 use AlexDpy\Acl\Exception\MaskNotFoundException;
 use AlexDpy\Acl\Mask\BasicMaskBuilder;
 use AlexDpy\Acl\Model\Permission;
@@ -22,6 +23,7 @@ abstract class AbstractDatabaseProviderTest extends AbstractDatabaseTest
         parent::setUp();
 
         $this->databaseProvider = $this->getDatabaseProvider();
+        $this->databaseProvider->setAclSchema($this->aclSchema);
     }
 
     /**

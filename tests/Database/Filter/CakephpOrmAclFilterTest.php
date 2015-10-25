@@ -39,6 +39,7 @@ class CakephpOrmAclFilterTest extends AbstractDatabaseFilterTest
         $query = $this->Posts->find();
 
         $aclFilter = new CakephpOrmAclFilter($query);
+        $aclFilter->setAclSchema($this->aclSchema);
         $aclFilter->apply('Posts', 'id', 'post-', $identifiers, $mask, $orX);
 
         $postsIds = [];

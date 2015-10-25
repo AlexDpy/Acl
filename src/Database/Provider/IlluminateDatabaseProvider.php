@@ -8,7 +8,7 @@ use AlexDpy\Acl\Model\RequesterInterface;
 use AlexDpy\Acl\Model\ResourceInterface;
 use Illuminate\Database\Connection;
 
-class IlluminateDatabaseProvider implements DatabaseProviderInterface
+class IlluminateDatabaseProvider extends AbstractDatabaseProvider
 {
     /**
      * @var Connection
@@ -16,18 +16,11 @@ class IlluminateDatabaseProvider implements DatabaseProviderInterface
     protected $connection;
 
     /**
-     * @var string
-     */
-    protected $permissionsTable;
-
-    /**
      * @param Connection $connection
-     * @param string     $permissionsTable
      */
-    public function __construct(Connection $connection, $permissionsTable = 'acl_permissions')
+    public function __construct(Connection $connection)
     {
         $this->connection = $connection;
-        $this->permissionsTable = $permissionsTable;
     }
 
     /**
@@ -39,7 +32,7 @@ class IlluminateDatabaseProvider implements DatabaseProviderInterface
         $this->connection->setFetchMode(\PDO::FETCH_COLUMN);
 
         if (null === $mask = $this->connection->selectOne(
-            'SELECT mask FROM ' . $this->permissionsTable . ' WHERE requester = :requester AND resource = :resource',
+            'SELECT mask FROM ' . $this->getAclSchema()->getPermissionsTableName() . ' WHERE requester = :requester AND resource = :resource',
             [
                 'requester' => $requester->getAclRequesterIdentifier(),
                 'resource' => $resource->getAclResourceIdentifier(),
@@ -61,7 +54,7 @@ class IlluminateDatabaseProvider implements DatabaseProviderInterface
     public function deletePermission(PermissionInterface $permission)
     {
         $this->connection->delete(
-            'DELETE FROM ' . $this->permissionsTable . ' WHERE requester = :requester AND resource = :resource',
+            'DELETE FROM ' . $this->getAclSchema()->getPermissionsTableName() . ' WHERE requester = :requester AND resource = :resource',
             [
                 'requester' => $permission->getRequester()->getAclRequesterIdentifier(),
                 'resource' => $permission->getResource()->getAclResourceIdentifier(),
@@ -75,7 +68,7 @@ class IlluminateDatabaseProvider implements DatabaseProviderInterface
     public function updatePermission(PermissionInterface $permission)
     {
         $this->connection->update(
-            'UPDATE ' . $this->permissionsTable . ' SET mask = :mask WHERE requester = :requester AND resource = :resource',
+            'UPDATE ' . $this->getAclSchema()->getPermissionsTableName() . ' SET mask = :mask WHERE requester = :requester AND resource = :resource',
             [
                 'mask' => $permission->getMask(),
                 'requester' => $permission->getRequester()->getAclRequesterIdentifier(),
@@ -90,7 +83,7 @@ class IlluminateDatabaseProvider implements DatabaseProviderInterface
     public function insertPermission(PermissionInterface $permission)
     {
         $this->connection->insert(
-            'INSERT INTO ' . $this->permissionsTable . ' (requester, resource, mask) VALUES (:requester, :resource, :mask)',
+            'INSERT INTO ' . $this->getAclSchema()->getPermissionsTableName() . ' (requester, resource, mask) VALUES (:requester, :resource, :mask)',
             [
                 'requester' => $permission->getRequester()->getAclRequesterIdentifier(),
                 'resource' => $permission->getResource()->getAclResourceIdentifier(),

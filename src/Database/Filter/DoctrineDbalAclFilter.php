@@ -5,7 +5,7 @@ namespace AlexDpy\Acl\Database\Filter;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
 
-class DoctrineDbalAclFilter implements AclFilterInterface
+class DoctrineDbalAclFilter extends AbstractAclFilter
 {
     /**
      * @var Connection
@@ -34,7 +34,7 @@ class DoctrineDbalAclFilter implements AclFilterInterface
         $this->queryBuilder
             ->leftJoin(
                 $fromAlias,
-                'acl_permissions',
+                $this->getAclSchema()->getPermissionsTableName(),
                 'acl_p',
                 'acl_p.resource = ' . $this->connection->getDatabasePlatform()->getConcatExpression(
                     ':acl_prefix', $fromAlias . '.' . $fromIdentifier

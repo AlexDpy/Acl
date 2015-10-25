@@ -42,6 +42,7 @@ class DoctrineOrmAclFilterTest extends AbstractDatabaseFilterTest
         $query = $qb->select('p')->from('Tests\AlexDpy\Acl\Post', 'p')->getQuery();
 
         $aclFilter = new DoctrineOrmAclFilter($query);
+        $aclFilter->setAclSchema($this->aclSchema);
         $aclFilter->apply('p', 'id', 'post-', $identifiers, $mask, $orX);
 
         $result = array_map(function (Post $post) {

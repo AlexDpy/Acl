@@ -2,12 +2,13 @@
 
 namespace Tests\AlexDpy\Acl\Database;
 
-use PDO;
-use PDOStatement;
+use AlexDpy\Acl\Database\Schema\AclSchema;
 use AlexDpy\Acl\Model\Requester;
 use AlexDpy\Acl\Model\RequesterInterface;
 use AlexDpy\Acl\Model\Resource;
 use AlexDpy\Acl\Model\ResourceInterface;
+use PDO;
+use PDOStatement;
 
 abstract class AbstractDatabaseTest extends \PHPUnit_Framework_TestCase
 {
@@ -17,6 +18,11 @@ abstract class AbstractDatabaseTest extends \PHPUnit_Framework_TestCase
      * @var PDO
      */
     protected $pdo;
+
+    /**
+     * @var AclSchema
+     */
+    protected $aclSchema;
 
     /**
      * @var RequesterInterface
@@ -46,6 +52,7 @@ abstract class AbstractDatabaseTest extends \PHPUnit_Framework_TestCase
             $this->markTestSkipped('This test requires SQLite support in your environment.');
         }
 
+        $this->aclSchema = new AclSchema();
         $this->pdo = new PDO('sqlite:' . self::SQLITE_PATH, null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 
         try {
@@ -53,14 +60,7 @@ abstract class AbstractDatabaseTest extends \PHPUnit_Framework_TestCase
         } catch (\PDOException $e) {
         }
 
-        $create = <<<SQL
-CREATE TABLE acl_permissions (
-  requester VARCHAR(255) NOT NULL,
-  resource VARCHAR(255) NOT NULL,
-  mask INTEGER NOT NULL,
-  PRIMARY KEY(requester, resource)
-)
-SQL;
+        $create = $this->aclSchema->getCreateQuery('sqlite');
 
         $this->pdo->prepare($create)->execute();
 

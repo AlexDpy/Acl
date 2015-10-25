@@ -2,7 +2,9 @@
 
 namespace AlexDpy\Acl\Database\Filter;
 
-interface AclFilterInterface
+use AlexDpy\Acl\Database\Schema\HasAclSchemaInterface;
+
+interface AclFilterInterface extends HasAclSchemaInterface
 {
     /**
      * @param string $fromAlias

@@ -4,7 +4,7 @@ namespace AlexDpy\Acl\Database\Filter;
 
 use Cake\ORM\Query;
 
-class CakephpOrmAclFilter implements AclFilterInterface
+class CakephpOrmAclFilter extends AbstractAclFilter
 {
     /**
      * @var Query
@@ -25,7 +25,7 @@ class CakephpOrmAclFilter implements AclFilterInterface
     public function apply($fromAlias, $fromIdentifier, $resourcePrefix, array $requesterIdentifiers, $mask, array $orX = [])
     {
         $this->query->join([
-            'table' => 'acl_permissions',
+            'table' => $this->getAclSchema()->getPermissionsTableName(),
             'alias' => 'acl_p',
             'type' => 'LEFT',
             'conditions' => $this->query->newExpr()->eq('acl_p.resource', $this->query->func()->concat([

@@ -8,7 +8,7 @@ use AlexDpy\Acl\Model\RequesterInterface;
 use AlexDpy\Acl\Model\ResourceInterface;
 use Cake\Database\Connection;
 
-class CakephpDatabaseProvider implements DatabaseProviderInterface
+class CakephpDatabaseProvider extends AbstractDatabaseProvider
 {
     /**
      * @var Connection
@@ -16,18 +16,11 @@ class CakephpDatabaseProvider implements DatabaseProviderInterface
     protected $connection;
 
     /**
-     * @var string
-     */
-    protected $permissionsTable;
-
-    /**
      * @param Connection $connection
-     * @param string     $permissionsTable
      */
-    public function __construct(Connection $connection, $permissionsTable = 'acl_permissions')
+    public function __construct(Connection $connection)
     {
         $this->connection = $connection;
-        $this->permissionsTable = $permissionsTable;
     }
 
     /**
@@ -36,7 +29,7 @@ class CakephpDatabaseProvider implements DatabaseProviderInterface
     public function findMask(RequesterInterface $requester, ResourceInterface $resource)
     {
         if (false === $result = $this->connection->execute(
-            'SELECT mask FROM ' . $this->permissionsTable . ' WHERE requester = :requester AND resource = :resource',
+            'SELECT mask FROM ' . $this->getAclSchema()->getPermissionsTableName() . ' WHERE requester = :requester AND resource = :resource',
             [
                 'requester' => $requester->getAclRequesterIdentifier(),
                 'resource' => $resource->getAclResourceIdentifier(),
@@ -58,7 +51,7 @@ class CakephpDatabaseProvider implements DatabaseProviderInterface
     public function deletePermission(PermissionInterface $permission)
     {
         $this->connection->delete(
-            $this->permissionsTable,
+            $this->getAclSchema()->getPermissionsTableName(),
             [
                 'requester' => $permission->getRequester()->getAclRequesterIdentifier(),
                 'resource' => $permission->getResource()->getAclResourceIdentifier(),
@@ -76,7 +69,7 @@ class CakephpDatabaseProvider implements DatabaseProviderInterface
     public function updatePermission(PermissionInterface $permission)
     {
         $this->connection->update(
-            $this->permissionsTable,
+            $this->getAclSchema()->getPermissionsTableName(),
             ['mask' => $permission->getMask()],
             [
                 'requester' => $permission->getRequester()->getAclRequesterIdentifier(),
@@ -96,7 +89,7 @@ class CakephpDatabaseProvider implements DatabaseProviderInterface
     public function insertPermission(PermissionInterface $permission)
     {
         $this->connection->insert(
-            $this->permissionsTable,
+            $this->getAclSchema()->getPermissionsTableName(),
             [
                 'requester' => $permission->getRequester()->getAclRequesterIdentifier(),
                 'resource' => $permission->getResource()->getAclResourceIdentifier(),
